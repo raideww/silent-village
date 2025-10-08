@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
     private Vector2 moveValue;
     private Rigidbody2D rb;
     private bool isGrounded;
+    private SpriteRenderer spriteRenderer;
 
     public float moveSpeed = 5.0f;
     public float jumpSpeed = 10.0f;
@@ -37,6 +38,7 @@ public class PlayerController : MonoBehaviour
         moveAction = InputSystem.actions.FindAction("move");
         jumpAction = InputSystem.actions.FindAction("jump");
         rb = GetComponent<Rigidbody2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     private void Update()
@@ -64,7 +66,17 @@ public class PlayerController : MonoBehaviour
 
     private void Walking()
     {
+        if (moveValue.x > 0)
+        {
+            spriteRenderer.flipX = true;
+        }
+        else if (moveValue.x < 0)
+        {
+            spriteRenderer.flipX = false;
+        }
         rb.linearVelocityX = moveValue.x * moveSpeed;
+        
+
     }
 
     void OnDrawGizmosSelected()
