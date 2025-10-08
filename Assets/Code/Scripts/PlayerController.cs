@@ -18,6 +18,10 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 5.0f;
     public float jumpSpeed = 10.0f;
 
+    public Transform groundCheck;
+    public float groundCheckRadius = 0.2f;
+    public LayerMask groundLayer;
+
     private void OnEnable()
     {
         inputActions.FindActionMap("Player").Enable();
@@ -50,19 +54,10 @@ public class PlayerController : MonoBehaviour
         Walking();
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGrounded = true;
-        }
-    }
-
     private void Jump()
-    {
+    {   isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
         if (isGrounded)
         {
-            isGrounded = false;
             rb.linearVelocityY = rb.linearVelocityY + jumpSpeed;
         }
     }
@@ -70,5 +65,12 @@ public class PlayerController : MonoBehaviour
     private void Walking()
     {
         rb.linearVelocityX = moveValue.x * moveSpeed;
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        // Just to visualize the ground check in the editor
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
     }
 }
