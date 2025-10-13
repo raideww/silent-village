@@ -19,7 +19,7 @@ public class PlayerController : MonoBehaviour
     private bool isCrouching;
     private Vector3 previousScale;
     private SpriteRenderer spriteRenderer;
-    private Renderer renderer;
+    private Renderer rend;
     
 
     public float moveSpeed = 5.0f;
@@ -51,7 +51,7 @@ public class PlayerController : MonoBehaviour
         previousScale = transform.localScale;
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        renderer = GetComponent<Renderer>();
+        rend = GetComponent<Renderer>();
     }
 
     private void Update()
@@ -68,7 +68,7 @@ public class PlayerController : MonoBehaviour
             // Getting previous scale to take into account when calculating height compensation
             // because when player's size changes it changes in center which leaves player off the ground
             // thats why we should compensate this change
-            Vector2 beforeCrouchSize = renderer.bounds.size;
+            Vector2 beforeCrouchSize = rend.bounds.size;
 
             // Changing player's size
             previousScale = transform.localScale;
@@ -77,19 +77,19 @@ public class PlayerController : MonoBehaviour
 
             // Calculating height compensation by getting the difference of player's height before changing size and after
             // and dividing it by 2 because we only need to account space under the player
-            Vector2 afterCrouchSize = renderer.bounds.size;
+            Vector2 afterCrouchSize = rend.bounds.size;
             float heightCompensation = (beforeCrouchSize.y - afterCrouchSize.y) / 2;
             Vector2 compensatedPosition = transform.localPosition - new Vector3(0, heightCompensation, 0);
             transform.localPosition = compensatedPosition;
         }
         else if (crouchAction.WasReleasedThisFrame())
         {
-            Vector2 beforeCrouchSize = renderer.bounds.size;
+            Vector2 beforeCrouchSize = rend.bounds.size;
 
             transform.localScale = previousScale;
             isCrouching = false;
 
-            Vector2 afterCrouchSize = renderer.bounds.size;
+            Vector2 afterCrouchSize = rend.bounds.size;
             float heightCompensation = (beforeCrouchSize.y - afterCrouchSize.y) / 2;
             Vector2 compensatedPosition = transform.localPosition - new Vector3(0, heightCompensation, 0);
             transform.localPosition = compensatedPosition;
@@ -131,13 +131,17 @@ public class PlayerController : MonoBehaviour
             spriteRenderer.flipX = false;
         }
 
-        if (!isSprinting)
+        if (isCrouching)
         {
-            rb.linearVelocityX = moveValue.x * moveSpeed;
+            rb.linearVelocityX = moveValue.x * crouchSpeed;
+        }
+        else if (isSprinting)
+        {
+            rb.linearVelocityX = moveValue.x * sprintSpeed;
         }
         else
         {
-            rb.linearVelocityX = moveValue.x * sprintSpeed;
+            rb.linearVelocityX = moveValue.x * moveSpeed;
         }
 
     }
