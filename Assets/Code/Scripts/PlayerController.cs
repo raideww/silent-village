@@ -9,15 +9,18 @@ public class PlayerController : MonoBehaviour
 
     private InputAction moveAction;
     private InputAction jumpAction;
+    private InputAction sprintAction;
 
 
     private Vector2 moveValue;
     private Rigidbody2D rb;
     private bool isGrounded;
+    private bool isSprinting;
     private SpriteRenderer spriteRenderer;
 
     public float moveSpeed = 5.0f;
     public float jumpSpeed = 10.0f;
+    public float sprintSpeed = 10.0f;
 
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
@@ -37,6 +40,7 @@ public class PlayerController : MonoBehaviour
     {
         moveAction = InputSystem.actions.FindAction("move");
         jumpAction = InputSystem.actions.FindAction("jump");
+        sprintAction = InputSystem.actions.FindAction("sprint");
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
     }
@@ -48,6 +52,15 @@ public class PlayerController : MonoBehaviour
         if (jumpAction.WasPressedThisFrame())
         {
             Jump();
+        }
+
+        if (sprintAction.WasPerformedThisFrame())
+        {
+            isSprinting = true;
+        }
+        else if (sprintAction.WasCompletedThisFrame())
+        {
+            isSprinting = false;
         }
     }
 
@@ -66,6 +79,8 @@ public class PlayerController : MonoBehaviour
 
     private void Walking()
     {
+
+
         if (moveValue.x > 0)
         {
             spriteRenderer.flipX = true;
@@ -74,8 +89,15 @@ public class PlayerController : MonoBehaviour
         {
             spriteRenderer.flipX = false;
         }
-        rb.linearVelocityX = moveValue.x * moveSpeed;
-        
+
+        if (!isSprinting)
+        {
+            rb.linearVelocityX = moveValue.x * moveSpeed;
+        }
+        else
+        {
+            rb.linearVelocityX = moveValue.x * sprintSpeed;
+        }
 
     }
 
