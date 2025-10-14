@@ -31,10 +31,11 @@ public class PlayerController : MonoBehaviour
     public float jumpSpeed = 10.0f;
 
     // Crouch
-    private Vector3 previousScale;
     private Vector2 originalSpriteSize;
     private Vector2 originalBoxColliderSize;
     private Vector2 originalBoxColliderOffset;
+    public Transform ceilingCheck;
+    public Vector2 ceilingCheckSize = new Vector2(0.7f, 0.4f);
 
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
@@ -56,7 +57,6 @@ public class PlayerController : MonoBehaviour
         jumpAction = InputSystem.actions.FindAction("jump");
         sprintAction = InputSystem.actions.FindAction("sprint");
         crouchAction = InputSystem.actions.FindAction("crouch");
-        previousScale = transform.localScale;
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         rend = GetComponent<Renderer>();
@@ -79,11 +79,17 @@ public class PlayerController : MonoBehaviour
 
         if (crouchAction.WasPressedThisFrame())
         {
-            Crouch();
+            if (!isCrouching)
+            {
+                Crouch();
+            }
         }
         else if (crouchAction.WasReleasedThisFrame())
         {
-            Crouch(reverse: true);
+            if (isCrouching)
+            {
+                Crouch(reverse: true);
+            }
         }
         if (sprintAction.WasPerformedThisFrame())
         {
@@ -97,7 +103,15 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+
         Walking();
+
+        if (tryingToUncrouch && !GroundAbove())
+        {
+            Crouch(reverse: true);
+        }
+        Debug.Log(GroundAbove());
+
     }
 
     private void Jump()
@@ -136,11 +150,11 @@ public class PlayerController : MonoBehaviour
         }
 
     }
-    
+
     void Crouch(bool reverse = false)
     {
         if (!reverse)
-        {   
+        {
             // Getting previous scale to take into account when calculating height compensation
             // because when player's size changes it changes in center which leaves player off the ground
             // thats why we should compensate this change
@@ -169,9 +183,19 @@ public class PlayerController : MonoBehaviour
             float heightCompensation = (beforeCrouchSize.y - afterCrouchSize.y) / 2;
             Vector2 compensatedPosition = transform.localPosition - new Vector3(0, heightCompensation, 0);
             transform.localPosition = compensatedPosition;
+
+            // Also crouching affects crucial gameobjects like: "Ground Check" and "Ceiling Check"
+            // So we also have to compensate their position too
+            groundCheck.transform.position += new Vector3(0f, heightCompensation);
+            ceilingCheck.transform.position += new Vector3(0f, heightCompensation);
         }
         else
         {
+            if (GroundAbove())
+            {
+                tryingToUncrouch = true;
+                return;
+            }
             Vector2 beforeCrouchSize = rend.bounds.size;
 
             spriteRenderer.size = originalSpriteSize;
@@ -184,8 +208,16 @@ public class PlayerController : MonoBehaviour
             float heightCompensation = (beforeCrouchSize.y - afterCrouchSize.y) / 2;
             Vector2 compensatedPosition = transform.localPosition - new Vector3(0, heightCompensation, 0);
             transform.localPosition = compensatedPosition;
+
+            groundCheck.transform.position += new Vector3(0f, heightCompensation);
+            ceilingCheck.transform.position += new Vector3(0f, heightCompensation);
         }
-        
+
+    }
+    
+    bool GroundAbove()
+    {
+        return Physics2D.OverlapBox(ceilingCheck.position, ceilingCheckSize, 0f, groundLayer);
     }
 
     void OnDrawGizmosSelected()
@@ -193,5 +225,6 @@ public class PlayerController : MonoBehaviour
         // Just to visualize the ground check in the editor
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        Gizmos.DrawWireCube(ceilingCheck.position, ceilingCheckSize);
     }
 }
