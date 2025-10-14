@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
 {
@@ -15,18 +16,26 @@ public class PlayerController : MonoBehaviour
     private Vector2 moveValue;
     private Rigidbody2D rb;
     private bool isGrounded;
-    private bool isSprinting;
-    private bool isCrouching;
-    private Vector3 previousScale;
+    private bool isSprinting = false;
+    private bool isCrouching = false;
+    private bool tryingToUncrouch = false;
     private SpriteRenderer spriteRenderer;
+    private BoxCollider2D boxCollider;
     private Renderer rend;
     
 
     public float moveSpeed = 5.0f;
     public float sprintSpeed = 10.0f;
     public float crouchSpeed = 2.5f;
-    public Vector3 crouchScale = new Vector3(1.0f, 0.7f, 1.0f);
+    public Vector2 crouchScale = new Vector2(1.0f, 0.7f);
     public float jumpSpeed = 10.0f;
+
+    // Crouch
+    private Vector2 originalSpriteSize;
+    private Vector2 originalBoxColliderSize;
+    private Vector2 originalBoxColliderOffset;
+    public Transform ceilingCheck;
+    public Vector2 ceilingCheckSize = new Vector2(0.7f, 0.4f);
 
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
@@ -48,15 +57,20 @@ public class PlayerController : MonoBehaviour
         jumpAction = InputSystem.actions.FindAction("jump");
         sprintAction = InputSystem.actions.FindAction("sprint");
         crouchAction = InputSystem.actions.FindAction("crouch");
-        previousScale = transform.localScale;
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         rend = GetComponent<Renderer>();
+        boxCollider = GetComponent<BoxCollider2D>();
     }
 
     private void Update()
     {
         moveValue = moveAction.ReadValue<Vector2>();
+
+        if (tryingToUncrouch)
+        {
+            
+        }
 
         if (jumpAction.WasPressedThisFrame())
         {
@@ -65,34 +79,17 @@ public class PlayerController : MonoBehaviour
 
         if (crouchAction.WasPressedThisFrame())
         {
-            // Getting previous scale to take into account when calculating height compensation
-            // because when player's size changes it changes in center which leaves player off the ground
-            // thats why we should compensate this change
-            Vector2 beforeCrouchSize = rend.bounds.size;
-
-            // Changing player's size
-            previousScale = transform.localScale;
-            transform.localScale = Vector3.Scale(transform.localScale, crouchScale);
-            isCrouching = true;
-
-            // Calculating height compensation by getting the difference of player's height before changing size and after
-            // and dividing it by 2 because we only need to account space under the player
-            Vector2 afterCrouchSize = rend.bounds.size;
-            float heightCompensation = (beforeCrouchSize.y - afterCrouchSize.y) / 2;
-            Vector2 compensatedPosition = transform.localPosition - new Vector3(0, heightCompensation, 0);
-            transform.localPosition = compensatedPosition;
+            if (!isCrouching)
+            {
+                Crouch();
+            }
         }
         else if (crouchAction.WasReleasedThisFrame())
         {
-            Vector2 beforeCrouchSize = rend.bounds.size;
-
-            transform.localScale = previousScale;
-            isCrouching = false;
-
-            Vector2 afterCrouchSize = rend.bounds.size;
-            float heightCompensation = (beforeCrouchSize.y - afterCrouchSize.y) / 2;
-            Vector2 compensatedPosition = transform.localPosition - new Vector3(0, heightCompensation, 0);
-            transform.localPosition = compensatedPosition;
+            if (isCrouching)
+            {
+                Crouch(reverse: true);
+            }
         }
         if (sprintAction.WasPerformedThisFrame())
         {
@@ -106,7 +103,15 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+
         Walking();
+
+        if (tryingToUncrouch && !GroundAbove())
+        {
+            Crouch(reverse: true);
+        }
+        Debug.Log(GroundAbove());
+
     }
 
     private void Jump()
@@ -117,7 +122,7 @@ public class PlayerController : MonoBehaviour
             rb.linearVelocityY = rb.linearVelocityY + jumpSpeed;
         }
     }
-    
+
     private void Walking()
     {
 
@@ -146,10 +151,80 @@ public class PlayerController : MonoBehaviour
 
     }
 
+    void Crouch(bool reverse = false)
+    {
+        if (!reverse)
+        {
+            // Getting previous scale to take into account when calculating height compensation
+            // because when player's size changes it changes in center which leaves player off the ground
+            // thats why we should compensate this change
+            Vector2 beforeCrouchSize = rend.bounds.size;
+
+            // Saving original values to go back to them after crouch
+            originalSpriteSize = spriteRenderer.size;
+            originalBoxColliderSize = boxCollider.size;
+            originalBoxColliderOffset = boxCollider.offset;
+
+            // Changing player status
+            isCrouching = true;
+            tryingToUncrouch = false;
+
+            // To crouch the character we need to change these components
+            // 1) sprite size to show that our character is crouched
+            //    and in future may be replaced to another sprite
+            // 2) box collider to match the rendered sprite size on the screen
+            spriteRenderer.size = Vector2.Scale(spriteRenderer.size, crouchScale);
+            boxCollider.size = Vector2.Scale(boxCollider.size, crouchScale);
+            boxCollider.offset = Vector2.Scale(boxCollider.offset, crouchScale);
+
+            // Calculating height compensation by getting the difference of player's height before changing size and after
+            // and dividing it by 2 because we only need to account space under the player
+            Vector2 afterCrouchSize = rend.bounds.size;
+            float heightCompensation = (beforeCrouchSize.y - afterCrouchSize.y) / 2;
+            Vector2 compensatedPosition = transform.localPosition - new Vector3(0, heightCompensation, 0);
+            transform.localPosition = compensatedPosition;
+
+            // Also crouching affects crucial gameobjects like: "Ground Check" and "Ceiling Check"
+            // So we also have to compensate their position too
+            groundCheck.transform.position += new Vector3(0f, heightCompensation);
+            ceilingCheck.transform.position += new Vector3(0f, heightCompensation);
+        }
+        else
+        {
+            if (GroundAbove())
+            {
+                tryingToUncrouch = true;
+                return;
+            }
+            Vector2 beforeCrouchSize = rend.bounds.size;
+
+            spriteRenderer.size = originalSpriteSize;
+            boxCollider.size = originalBoxColliderSize;
+            boxCollider.offset = originalBoxColliderOffset;
+            isCrouching = false;
+            tryingToUncrouch = false;
+
+            Vector2 afterCrouchSize = rend.bounds.size;
+            float heightCompensation = (beforeCrouchSize.y - afterCrouchSize.y) / 2;
+            Vector2 compensatedPosition = transform.localPosition - new Vector3(0, heightCompensation, 0);
+            transform.localPosition = compensatedPosition;
+
+            groundCheck.transform.position += new Vector3(0f, heightCompensation);
+            ceilingCheck.transform.position += new Vector3(0f, heightCompensation);
+        }
+
+    }
+    
+    bool GroundAbove()
+    {
+        return Physics2D.OverlapBox(ceilingCheck.position, ceilingCheckSize, 0f, groundLayer);
+    }
+
     void OnDrawGizmosSelected()
     {
         // Just to visualize the ground check in the editor
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        Gizmos.DrawWireCube(ceilingCheck.position, ceilingCheckSize);
     }
 }
