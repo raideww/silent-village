@@ -1,4 +1,5 @@
 using System;
+using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -11,6 +12,7 @@ public class PlayerController : MonoBehaviour
     private InputAction jumpAction;
     private InputAction sprintAction;
     private InputAction crouchAction;
+    private InputAction climbAction;
 
 
     private Vector2 moveValue;
@@ -37,6 +39,12 @@ public class PlayerController : MonoBehaviour
     public Transform ceilingCheck;
     public Vector2 ceilingCheckSize = new Vector2(0.7f, 0.4f);
 
+    // Climb
+    private bool onLadder = false;
+    private bool isClimbing = false;
+    private float originalGravityScale;
+    public float climbSpeed = 2.5f;
+
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
@@ -57,6 +65,7 @@ public class PlayerController : MonoBehaviour
         jumpAction = InputSystem.actions.FindAction("jump");
         sprintAction = InputSystem.actions.FindAction("sprint");
         crouchAction = InputSystem.actions.FindAction("crouch");
+        climbAction = InputSystem.actions.FindAction("climb");
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         rend = GetComponent<Renderer>();
@@ -67,14 +76,21 @@ public class PlayerController : MonoBehaviour
     {
         moveValue = moveAction.ReadValue<Vector2>();
 
-        if (tryingToUncrouch)
-        {
-            
-        }
-
         if (jumpAction.WasPressedThisFrame())
         {
             Jump();
+        }
+
+
+        if (onLadder && climbAction.WasPressedThisFrame())
+        {
+            ClimbInit();
+            isClimbing = true;
+        }
+        else if (climbAction.WasReleasedThisFrame())
+        {
+            ClimbInit(reverse: true);
+            isClimbing = false;
         }
 
         if (crouchAction.WasPressedThisFrame())
@@ -106,11 +122,15 @@ public class PlayerController : MonoBehaviour
 
         Walking();
 
+        if (isClimbing && onLadder)
+        {
+            rb.linearVelocityY = climbSpeed;
+        }
+
         if (tryingToUncrouch && !GroundAbove())
         {
             Crouch(reverse: true);
         }
-        Debug.Log(GroundAbove());
 
     }
 
@@ -218,6 +238,43 @@ public class PlayerController : MonoBehaviour
     bool GroundAbove()
     {
         return Physics2D.OverlapBox(ceilingCheck.position, ceilingCheckSize, 0f, groundLayer);
+    }
+
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Ladder"))
+        {
+            onLadder = true;
+        }
+    }
+
+    void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Ladder"))
+        {
+            onLadder = false;
+            ClimbInit(reverse: true);
+        }
+    }
+
+    void ClimbInit(bool reverse=false)
+    {
+        if (!reverse)
+        {
+            if (!isClimbing)
+            {
+                originalGravityScale = rb.gravityScale;
+                rb.gravityScale = 0;
+            }
+        }
+        else
+        {
+            if (isClimbing)
+            {
+                rb.gravityScale = originalGravityScale;
+            }
+        }
+        
     }
 
     void OnDrawGizmosSelected()
