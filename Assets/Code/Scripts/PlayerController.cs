@@ -101,6 +101,7 @@ public class PlayerController : MonoBehaviour
         UpdateStaminaBar();
         healthValue = healthMaxValue;
         healthWidth = healthBarRectTransform.sizeDelta.x;
+        UpdateHealthBar();
     }
 
     private void Update()
