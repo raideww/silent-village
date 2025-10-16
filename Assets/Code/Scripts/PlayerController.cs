@@ -27,7 +27,6 @@ public class PlayerController : MonoBehaviour
     
 
     public float moveSpeed = 5.0f;
-    public float sprintSpeed = 10.0f;
     public float crouchSpeed = 2.5f;
     public Vector2 crouchScale = new Vector2(1.0f, 0.7f);
     public float jumpSpeed = 10.0f;
@@ -44,6 +43,20 @@ public class PlayerController : MonoBehaviour
     private bool isClimbing = false;
     private float originalGravityScale;
     public float climbSpeed = 2.5f;
+
+    // Sprint
+    public float sprintSpeed = 10.0f;
+
+    // Stamina
+    public RectTransform staminaBarRectTransform;
+    public RectTransform staminaRectTransform;
+    public float staminaMaxValue = 5.0f;
+    public float staminaRegenPerSecond = 1.0f;
+    public float staminaDrainPerSecond = 1.0f;
+
+    private float staminaValue;
+    private float staminaWidth;
+
 
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
@@ -70,6 +83,9 @@ public class PlayerController : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         rend = GetComponent<Renderer>();
         boxCollider = GetComponent<BoxCollider2D>();
+        staminaValue = staminaMaxValue;
+        staminaWidth = staminaBarRectTransform.sizeDelta.x;
+        UpdateStaminaBar();
     }
 
     private void Update()
@@ -160,15 +176,31 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocityX = moveValue.x * crouchSpeed;
         }
-        else if (isSprinting)
+        else if (isSprinting && staminaValue > 0)
         {
             rb.linearVelocityX = moveValue.x * sprintSpeed;
+            staminaValue -= staminaDrainPerSecond * Time.deltaTime;
+            if (staminaValue < 0)
+            {
+                staminaValue = 0;
+            }
+            UpdateStaminaBar();
+
         }
         else
         {
             rb.linearVelocityX = moveValue.x * moveSpeed;
         }
-
+        
+        if (!isSprinting && staminaValue < staminaMaxValue)
+        {
+            staminaValue += staminaRegenPerSecond * Time.deltaTime;
+            if (staminaValue > staminaMaxValue)
+            {
+                staminaValue = staminaMaxValue;
+            }
+            UpdateStaminaBar();
+        }
     }
 
     void Crouch(bool reverse = false)
@@ -257,7 +289,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void ClimbInit(bool reverse=false)
+    void ClimbInit(bool reverse = false)
     {
         if (!reverse)
         {
@@ -274,7 +306,14 @@ public class PlayerController : MonoBehaviour
                 rb.gravityScale = originalGravityScale;
             }
         }
-        
+
+    }
+    
+    void UpdateStaminaBar()
+    {
+        float newWidth = (staminaValue / staminaMaxValue) * staminaWidth;
+        staminaRectTransform.sizeDelta = new Vector2(newWidth, staminaRectTransform.sizeDelta.y);
+        Debug.Log(newWidth);
     }
 
     void OnDrawGizmosSelected()
