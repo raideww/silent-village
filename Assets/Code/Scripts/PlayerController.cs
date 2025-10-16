@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
     private InputAction sprintAction;
     private InputAction crouchAction;
     private InputAction climbAction;
+    private InputAction healAction;
 
 
     private Vector2 moveValue;
@@ -62,6 +63,11 @@ public class PlayerController : MonoBehaviour
     public RectTransform healthRectTransform;
     public float healthMaxValue = 100.0f;
     private float healthValue;
+    private float healthWidth;
+
+    // Heal Potion
+    public int healPotionAmount = 1;
+    public float healPotionValue = 50.0f;
 
 
     public Transform groundCheck;
@@ -85,6 +91,7 @@ public class PlayerController : MonoBehaviour
         sprintAction = InputSystem.actions.FindAction("sprint");
         crouchAction = InputSystem.actions.FindAction("crouch");
         climbAction = InputSystem.actions.FindAction("climb");
+        healAction = InputSystem.actions.FindAction("heal");
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         rend = GetComponent<Renderer>();
@@ -93,6 +100,7 @@ public class PlayerController : MonoBehaviour
         staminaWidth = staminaBarRectTransform.sizeDelta.x;
         UpdateStaminaBar();
         healthValue = healthMaxValue;
+        healthWidth = healthBarRectTransform.sizeDelta.x;
     }
 
     private void Update()
@@ -102,6 +110,15 @@ public class PlayerController : MonoBehaviour
         if (jumpAction.WasPressedThisFrame())
         {
             Jump();
+        }
+
+        if (healAction.WasPressedThisFrame())
+        {
+            if (healPotionAmount > 0)
+            {
+                healPotionAmount -= 1;
+                Heal(healPotionValue);
+            }
         }
 
 
@@ -320,7 +337,12 @@ public class PlayerController : MonoBehaviour
     {
         float newWidth = (staminaValue / staminaMaxValue) * staminaWidth;
         staminaRectTransform.sizeDelta = new Vector2(newWidth, staminaRectTransform.sizeDelta.y);
-        Debug.Log(newWidth);
+    }
+
+    void UpdateHealthBar()
+    {
+        float newWidth = (healthValue / healthMaxValue) * healthWidth;
+        healthRectTransform.sizeDelta = new Vector2(newWidth, healthRectTransform.sizeDelta.y);
     }
 
     public void TakeDamage(float value)
@@ -331,6 +353,7 @@ public class PlayerController : MonoBehaviour
             healthValue = 0;
             Die();
         }
+        UpdateHealthBar();
     }
 
     void Heal(float value)
@@ -340,6 +363,7 @@ public class PlayerController : MonoBehaviour
         {
             healthValue = healthMaxValue;
         }
+        UpdateHealthBar();
     }
     
     void Die()
