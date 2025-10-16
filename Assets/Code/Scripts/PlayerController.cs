@@ -27,7 +27,6 @@ public class PlayerController : MonoBehaviour
     
 
     public float moveSpeed = 5.0f;
-    public float sprintSpeed = 10.0f;
     public float crouchSpeed = 2.5f;
     public Vector2 crouchScale = new Vector2(1.0f, 0.7f);
     public float jumpSpeed = 10.0f;
@@ -44,6 +43,14 @@ public class PlayerController : MonoBehaviour
     private bool isClimbing = false;
     private float originalGravityScale;
     public float climbSpeed = 2.5f;
+
+    // Sprint
+    public float sprintStaminaMax = 5.0f;
+    public float sprintRegenPerSecond = 1.0f;
+    public float sprintDrainPerSecond = 1.0f;
+    public float sprintSpeed = 10.0f;
+    private float sprintStamina;
+
 
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
@@ -70,6 +77,7 @@ public class PlayerController : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         rend = GetComponent<Renderer>();
         boxCollider = GetComponent<BoxCollider2D>();
+        sprintStamina = sprintStaminaMax;
     }
 
     private void Update()
@@ -160,15 +168,30 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocityX = moveValue.x * crouchSpeed;
         }
-        else if (isSprinting)
+        else if (isSprinting && sprintStamina > 0)
         {
             rb.linearVelocityX = moveValue.x * sprintSpeed;
+            sprintStamina -= sprintDrainPerSecond * Time.deltaTime;
+            if (sprintStamina < 0)
+            {
+                sprintStamina = 0;
+            }
+
         }
         else
         {
             rb.linearVelocityX = moveValue.x * moveSpeed;
         }
-
+        
+        if (!isSprinting && sprintStamina < sprintStaminaMax)
+        {
+            sprintStamina += sprintRegenPerSecond * Time.deltaTime;
+            if (sprintStamina > sprintStaminaMax)
+            {
+                sprintStamina = sprintStaminaMax;
+            }
+        }
+        Debug.Log(sprintStamina);
     }
 
     void Crouch(bool reverse = false)
