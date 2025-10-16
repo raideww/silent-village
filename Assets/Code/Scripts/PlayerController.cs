@@ -315,12 +315,36 @@ public class PlayerController : MonoBehaviour
         }
 
     }
-    
+
     void UpdateStaminaBar()
     {
         float newWidth = (staminaValue / staminaMaxValue) * staminaWidth;
         staminaRectTransform.sizeDelta = new Vector2(newWidth, staminaRectTransform.sizeDelta.y);
         Debug.Log(newWidth);
+    }
+
+    public void TakeDamage(float value)
+    {
+        healthValue -= value;
+        if (healthValue <= 0)
+        {
+            healthValue = 0;
+            Die();
+        }
+    }
+
+    void Heal(float value)
+    {
+        healthValue += value;
+        if (healthValue > healthMaxValue)
+        {
+            healthValue = healthMaxValue;
+        }
+    }
+    
+    void Die()
+    {
+        Debug.Log("Player died!");
     }
 
     void OnDrawGizmosSelected()
