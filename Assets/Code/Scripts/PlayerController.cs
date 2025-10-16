@@ -57,6 +57,12 @@ public class PlayerController : MonoBehaviour
     private float staminaValue;
     private float staminaWidth;
 
+    // Health
+    public RectTransform healthBarRectTransform;
+    public RectTransform healthRectTransform;
+    public float healthMaxValue = 100.0f;
+    private float healthValue;
+
 
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
@@ -86,6 +92,7 @@ public class PlayerController : MonoBehaviour
         staminaValue = staminaMaxValue;
         staminaWidth = staminaBarRectTransform.sizeDelta.x;
         UpdateStaminaBar();
+        healthValue = healthMaxValue;
     }
 
     private void Update()
