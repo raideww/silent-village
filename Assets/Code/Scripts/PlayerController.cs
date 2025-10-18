@@ -15,6 +15,7 @@ public class PlayerController : MonoBehaviour
     private InputAction climbAction;
     private InputAction healAction;
     private InputAction goDownAction;
+    private InputAction dashAction;
 
 
     private Vector2 moveValue;
@@ -71,6 +72,12 @@ public class PlayerController : MonoBehaviour
     public int healPotionAmount = 1;
     public float healPotionValue = 50.0f;
 
+    // Dash
+    public float dashSpeed = 10.0f;
+    public float dashCooldown = 5.0f;
+    private bool isDashing = false;
+    private float dashCooldownRemain = .0f;
+
 
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
@@ -95,6 +102,7 @@ public class PlayerController : MonoBehaviour
         climbAction = InputSystem.actions.FindAction("climb");
         healAction = InputSystem.actions.FindAction("heal");
         goDownAction = InputSystem.actions.FindAction("go down");
+        dashAction = InputSystem.actions.FindAction("dash");
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         rend = GetComponent<Renderer>();
@@ -110,6 +118,11 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         moveValue = moveAction.ReadValue<Vector2>();
+
+        if (dashAction.WasPressedThisFrame())
+        {
+            TryDash();
+        }
 
         if (jumpAction.WasPressedThisFrame())
         {
@@ -404,10 +417,24 @@ public class PlayerController : MonoBehaviour
         }
         UpdateHealthBar();
     }
-    
+
     void Die()
     {
         Debug.Log("Player died!");
+    }
+
+    void TryDash()
+    {
+        if (dashCooldownRemain == 0)
+        {
+            Dash();
+        }
+    }
+    
+    void Dash()
+    {
+        rb.AddForce(Vector2.right * dashSpeed, ForceMode2D.Impulse);
+        Debug.Log("dash");
     }
 
     void OnDrawGizmosSelected()
