@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -27,6 +28,7 @@ public class PlayerController : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private BoxCollider2D boxCollider;
     private Renderer rend;
+    private bool isFacingRight;
     
 
     public float moveSpeed = 5.0f;
@@ -73,9 +75,8 @@ public class PlayerController : MonoBehaviour
     public float healPotionValue = 50.0f;
 
     // Dash
-    public float dashSpeed = 10.0f;
+    public float dashSpeed = 4.0f;
     public float dashCooldown = 5.0f;
-    private bool isDashing = false;
     private float dashCooldownRemain = .0f;
 
 
@@ -205,6 +206,15 @@ public class PlayerController : MonoBehaviour
             Crouch(reverse: true);
         }
 
+        if (dashCooldownRemain > 0)
+        {
+            dashCooldownRemain -= Time.deltaTime;
+            if (dashCooldownRemain < 0)
+            {
+                dashCooldownRemain = 0;
+            }
+        }
+
     }
 
     private void Jump()
@@ -212,7 +222,7 @@ public class PlayerController : MonoBehaviour
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
         if (isGrounded)
         {
-            rb.linearVelocityY = rb.linearVelocityY + jumpSpeed;
+            rb.linearVelocityY +=jumpSpeed;
         }
     }
 
@@ -223,10 +233,12 @@ public class PlayerController : MonoBehaviour
         if (moveValue.x > 0)
         {
             spriteRenderer.flipX = true;
+            isFacingRight = true;
         }
         else if (moveValue.x < 0)
         {
             spriteRenderer.flipX = false;
+            isFacingRight = false;
         }
 
         if (isCrouching)
@@ -433,8 +445,18 @@ public class PlayerController : MonoBehaviour
     
     void Dash()
     {
-        rb.AddForce(Vector2.right * dashSpeed, ForceMode2D.Impulse);
-        Debug.Log("dash");
+        float multitplier;
+        if (isFacingRight)
+        {
+            multitplier = 1;
+        }
+        else
+        {
+            multitplier = -1;
+        }
+        Vector2 newPosition = rb.position + new Vector2(dashSpeed * multitplier, 0);
+        rb.MovePosition(newPosition);
+        dashCooldownRemain = dashCooldown;
     }
 
     void OnDrawGizmosSelected()
