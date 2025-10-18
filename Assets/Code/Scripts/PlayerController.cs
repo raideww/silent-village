@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
     private InputAction crouchAction;
     private InputAction climbAction;
     private InputAction healAction;
+    private InputAction goDownAction;
 
 
     private Vector2 moveValue;
@@ -43,6 +44,7 @@ public class PlayerController : MonoBehaviour
     private bool onLadder = false;
     private bool isClimbing = false;
     private float originalGravityScale;
+    private bool isGoingDown = false;
     public float climbSpeed = 2.5f;
 
     // Sprint
@@ -92,6 +94,7 @@ public class PlayerController : MonoBehaviour
         crouchAction = InputSystem.actions.FindAction("crouch");
         climbAction = InputSystem.actions.FindAction("climb");
         healAction = InputSystem.actions.FindAction("heal");
+        goDownAction = InputSystem.actions.FindAction("go down");
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         rend = GetComponent<Renderer>();
@@ -120,6 +123,17 @@ public class PlayerController : MonoBehaviour
                 healPotionAmount -= 1;
                 Heal(healPotionValue);
             }
+        }
+
+        if (onLadder && goDownAction.WasPerformedThisFrame())
+        {
+            GoDownInit();
+            isGoingDown = true;
+        }
+        else if (climbAction.WasReleasedThisFrame())
+        {
+            GoDownInit(reverse: true);
+            isGoingDown = false;
         }
 
 
@@ -162,6 +176,11 @@ public class PlayerController : MonoBehaviour
     {
 
         Walking();
+
+        if (isGoingDown && onLadder)
+        {
+            rb.linearVelocityY = -climbSpeed;
+        }
 
         if (isClimbing && onLadder)
         {
@@ -332,6 +351,25 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+    }
+
+    void GoDownInit(bool reverse = true)
+    {
+        if (!reverse)
+        {
+            if (!isClimbing)
+            {
+                originalGravityScale = rb.gravityScale;
+                rb.gravityScale = 0;
+            }
+        }
+        else
+        {
+            if (isClimbing)
+            {
+                rb.gravityScale = originalGravityScale;
+            }
+        }
     }
 
     void UpdateStaminaBar()
