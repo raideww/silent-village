@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -15,6 +16,7 @@ public class PlayerController : MonoBehaviour
     private InputAction climbAction;
     private InputAction healAction;
     private InputAction goDownAction;
+    private InputAction dashAction;
 
 
     private Vector2 moveValue;
@@ -26,6 +28,7 @@ public class PlayerController : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private BoxCollider2D boxCollider;
     private Renderer rend;
+    private bool isFacingRight;
     
 
     public float moveSpeed = 5.0f;
@@ -71,6 +74,11 @@ public class PlayerController : MonoBehaviour
     public int healPotionAmount = 1;
     public float healPotionValue = 50.0f;
 
+    // Dash
+    public float dashSpeed = 4.0f;
+    public float dashCooldown = 5.0f;
+    private float dashCooldownRemain = .0f;
+
 
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
@@ -95,6 +103,7 @@ public class PlayerController : MonoBehaviour
         climbAction = InputSystem.actions.FindAction("climb");
         healAction = InputSystem.actions.FindAction("heal");
         goDownAction = InputSystem.actions.FindAction("go down");
+        dashAction = InputSystem.actions.FindAction("dash");
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         rend = GetComponent<Renderer>();
@@ -110,6 +119,11 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         moveValue = moveAction.ReadValue<Vector2>();
+
+        if (dashAction.WasPressedThisFrame())
+        {
+            TryDash();
+        }
 
         if (jumpAction.WasPressedThisFrame())
         {
@@ -192,6 +206,15 @@ public class PlayerController : MonoBehaviour
             Crouch(reverse: true);
         }
 
+        if (dashCooldownRemain > 0)
+        {
+            dashCooldownRemain -= Time.deltaTime;
+            if (dashCooldownRemain < 0)
+            {
+                dashCooldownRemain = 0;
+            }
+        }
+
     }
 
     private void Jump()
@@ -199,7 +222,7 @@ public class PlayerController : MonoBehaviour
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
         if (isGrounded)
         {
-            rb.linearVelocityY = rb.linearVelocityY + jumpSpeed;
+            rb.linearVelocityY +=jumpSpeed;
         }
     }
 
@@ -210,10 +233,12 @@ public class PlayerController : MonoBehaviour
         if (moveValue.x > 0)
         {
             spriteRenderer.flipX = true;
+            isFacingRight = true;
         }
         else if (moveValue.x < 0)
         {
             spriteRenderer.flipX = false;
+            isFacingRight = false;
         }
 
         if (isCrouching)
@@ -404,10 +429,34 @@ public class PlayerController : MonoBehaviour
         }
         UpdateHealthBar();
     }
-    
+
     void Die()
     {
         Debug.Log("Player died!");
+    }
+
+    void TryDash()
+    {
+        if (dashCooldownRemain == 0)
+        {
+            Dash();
+        }
+    }
+    
+    void Dash()
+    {
+        float multitplier;
+        if (isFacingRight)
+        {
+            multitplier = 1;
+        }
+        else
+        {
+            multitplier = -1;
+        }
+        Vector2 newPosition = rb.position + new Vector2(dashSpeed * multitplier, 0);
+        rb.MovePosition(newPosition);
+        dashCooldownRemain = dashCooldown;
     }
 
     void OnDrawGizmosSelected()
