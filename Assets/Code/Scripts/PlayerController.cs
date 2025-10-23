@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using NUnit.Framework;
+using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -17,6 +18,7 @@ public class PlayerController : MonoBehaviour
     private InputAction healAction;
     private InputAction goDownAction;
     private InputAction dashAction;
+    private InputAction attackAction;
 
 
     private Vector2 moveValue;
@@ -79,6 +81,10 @@ public class PlayerController : MonoBehaviour
     public float dashCooldown = 5.0f;
     private float dashCooldownRemain = .0f;
 
+    // Attack
+    private Animator animator;
+    public Transform weaponTransform;
+
 
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
@@ -96,6 +102,7 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
+        animator = GetComponent<Animator>();
         moveAction = InputSystem.actions.FindAction("move");
         jumpAction = InputSystem.actions.FindAction("jump");
         sprintAction = InputSystem.actions.FindAction("sprint");
@@ -104,6 +111,7 @@ public class PlayerController : MonoBehaviour
         healAction = InputSystem.actions.FindAction("heal");
         goDownAction = InputSystem.actions.FindAction("go down");
         dashAction = InputSystem.actions.FindAction("dash");
+        attackAction = InputSystem.actions.FindAction("attack");
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         rend = GetComponent<Renderer>();
@@ -119,6 +127,11 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         moveValue = moveAction.ReadValue<Vector2>();
+
+        if (attackAction.WasPressedThisFrame())
+        {
+            animator.SetTrigger("attack");
+        }
 
         if (dashAction.WasPressedThisFrame())
         {
@@ -228,17 +241,24 @@ public class PlayerController : MonoBehaviour
 
     private void Walking()
     {
-
-
         if (moveValue.x > 0)
         {
-            spriteRenderer.flipX = true;
             isFacingRight = true;
         }
         else if (moveValue.x < 0)
         {
-            spriteRenderer.flipX = false;
             isFacingRight = false;
+        }
+
+        if (isFacingRight)
+        {
+            spriteRenderer.flipX = true;
+            weaponTransform.localScale = new Vector3(-1, 1, 1);
+        }
+        else if (!isFacingRight)
+        {
+            spriteRenderer.flipX = false;
+            weaponTransform.localScale = new Vector3(1, 1, 1);
         }
 
         if (isCrouching)
