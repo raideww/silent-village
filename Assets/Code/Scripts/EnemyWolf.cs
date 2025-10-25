@@ -1,164 +1,87 @@
 using UnityEngine;
-using UnityEngine.UI;
 
-public class EnemyArcher : MonoBehaviour
+public class EnemyWolf : MonoBehaviour
 {
-    public Transform[] patrolPoints; // Points to patrol between
-    public float patrolSpeed = 2f;
-    public float chaseSpeed = 4f;
-    public float detectionRange = 5f;
-    public int maxHP = 100;
-    public Image hpBar; // UI Image for displaying HP above enemy
 
-    private int currentPatrolIndex = 0;
-    private Transform player;
-    private int currentHP;
-    private bool isChasing = false;
+    public float speed = 1.0f;
+    public float chaseSpeed = 3.0f;
+    public float detectionRange = 10.0f;
+    public float range = 2.0f;
+    public int damage = 10;
+    public Transform player;
     private Rigidbody2D rb;
-    [Header("Contact Damage")]
-    public int contactDamage = 10; // Damage applied when touching the player
-    public float damageCooldown = 1.0f; // Seconds between repeated damage while touching
-    private float lastDamageTime = -999f;
+    private Vector2 startingPoint;
+    private bool movingRight = true;
+
 
     void Start()
     {
-        currentHP = maxHP;
-        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null)
-        {
-            player = playerObj.transform;
-        }
-        else
-        {
-            Debug.LogWarning("EnemyArcher: No GameObject with tag 'Player' found.");
-        }
         rb = GetComponent<Rigidbody2D>();
-        if (rb != null)
-        {
-            // Prevent spinning
-            rb.constraints = RigidbodyConstraints2D.FreezeRotation;
-        }
-        UpdateHPBar();
+        startingPoint = transform.position;
+
+        // Optional: automatically find player by tag
+        if (player == null)
+            player = GameObject.FindGameObjectWithTag("Player").transform;
     }
 
+    // Update is called once per frame
     void Update()
     {
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
         if (distanceToPlayer <= detectionRange)
         {
-            // Chase the player
+            // Chase player
             ChasePlayer();
         }
         else
         {
-            // Patrol within limited area
+            // Patrol automatically
             Patrol();
         }
     }
-
     void Patrol()
     {
-        if (patrolPoints == null || patrolPoints.Length == 0) return;
-        Transform targetPoint = patrolPoints[currentPatrolIndex];
-        if (Vector3.Distance(transform.position, targetPoint.position) < 0.2f)
+        float move = (movingRight ? 1 : -1) * speed;
+        rb.linearVelocity = new Vector2(move, rb.linearVelocity.y);
+
+        if (movingRight && transform.position.x > startingPoint.x + range)
         {
-            currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
+            movingRight = false;
+            Flip();
         }
-        else
+        else if (!movingRight && transform.position.x < startingPoint.x - range)
         {
-            MoveTowards(targetPoint.position, patrolSpeed);
+            movingRight = true;
+            Flip();
         }
     }
-
     void ChasePlayer()
     {
-        MoveTowards(player.position, chaseSpeed);
-    }
+        if (player == null) return;
 
-    void MoveTowards(Vector3 target, float speed)
-    {
-        // Only move horizontally to avoid vertical flying
-        Vector3 delta = target - transform.position;
-        float dirX = Mathf.Sign(delta.x);
-        float moveX = dirX * speed;
-        if (rb != null)
-        {
-            // Preserve current vertical velocity (gravity, jumps, etc.) and only set horizontal speed
-            rb.linearVelocity = new Vector2(moveX, rb.linearVelocity.y);
-        }
-        // Optional: Add sprite flipping or animation here
-    }
+        // Move towards the player
+        Vector2 direction = (player.position - transform.position).normalized;
+        rb.linearVelocity = new Vector2(direction.x * chaseSpeed, rb.linearVelocity.y);
 
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("Player"))
+        // Flip to face player
+        if ((direction.x > 0 && !movingRight) || (direction.x < 0 && movingRight))
         {
-            Debug.Log($"EnemyArcher: Collided with Player ({collision.gameObject.name}). Attempting to apply damage.");
-            TryDealContactDamage(collision.gameObject);
-        }
-        else if (collision.gameObject.CompareTag("Projectile"))
-        {
-            // Take damage from player's attack
-            Debug.Log($"EnemyArcher: Hit by Projectile ({collision.gameObject.name}). Taking damage.");
-            TakeDamage(20);
-            Destroy(collision.gameObject);
-        }
-        else if (collision.gameObject.CompareTag("Enemy"))
-        {
-            // Optional: add logic for enemy collision
+            movingRight = !movingRight;
+            Flip();
         }
     }
-
-    private void OnCollisionStay2D(Collision2D collision)
+    void Flip()
     {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            TryDealContactDamage(collision.gameObject);
-        }
+        Vector3 localScale = transform.localScale;
+        localScale.x *= -1;
+        transform.localScale = localScale;
     }
-
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnDrawGizmosSelected()
     {
-        if (other.CompareTag("Player"))
-        {
-            Debug.Log($"EnemyArcher: TriggerEnter with Player ({other.gameObject.name}). Attempting to apply damage.");
-            TryDealContactDamage(other.gameObject);
-        }
-    }
-
-    private void OnTriggerStay2D(Collider2D other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            TryDealContactDamage(other.gameObject);
-        }
-    }
-
-    private void TryDealContactDamage(GameObject playerObj)
-    {
-        if (Time.time - lastDamageTime < damageCooldown) return;
-        lastDamageTime = Time.time;
-        Debug.Log($"EnemyArcher: Dealing {contactDamage} contact damage to {playerObj.name}.");
-        playerObj.SendMessage("TakeDamage", contactDamage, SendMessageOptions.DontRequireReceiver);
-    }
-
-    public void TakeDamage(int damage)
-    {
-        currentHP -= damage;
-        if (currentHP <= 0)
-        {
-            Destroy(gameObject);
-        }
-        UpdateHPBar();
-    }
-
-    void UpdateHPBar()
-    {
-        if (hpBar != null)
-        {
-            hpBar.fillAmount = (float)currentHP / maxHP;
-        }
+        // Visualize detection range
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, detectionRange);
     }
 
 }
