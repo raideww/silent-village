@@ -8,9 +8,9 @@ public class PlayerCombat : MonoBehaviour
     private Animator animator;
 
     // Attack
-    private bool isHolding = false;
     private float holdingTime;
-    private float chargedHoldingTime = 1.0f;
+    private float chargedHoldingTime = .2f;
+    private bool isHolding = false;
     private bool isCharged = false;
     
 
@@ -29,17 +29,24 @@ public class PlayerCombat : MonoBehaviour
 
         if (attackAction.WasPressedThisFrame())
         {
-            StartAttack();
+            if (!isHolding)
+            {
+                StartAttack();
+            }
         }
         if (attackAction.WasReleasedThisFrame())
         {
-            EndAttack();
+            if (isHolding)
+            {
+                EndAttack();
+            }
         }
     }
 
     void StartAttack()
     {
         isHolding = true;
+        ResetAnimTriggers();
     }
 
     void EndAttack()
@@ -51,17 +58,26 @@ public class PlayerCombat : MonoBehaviour
         else
         {
             animator.SetTrigger("chargedAttack");
+            animator.ResetTrigger("chargedAttackHold");
         }
         isHolding = false;
+        isCharged = false;
     }
-    
+
     void HoldAttack()
     {
         holdingTime += Time.deltaTime;
-        if (holdingTime >= chargedHoldingTime)
+        if (holdingTime >= chargedHoldingTime && !isCharged)
         {
             isCharged = true;
             animator.SetTrigger("chargedAttackHold");
         }
+    }
+    
+    void ResetAnimTriggers()
+    {
+        animator.ResetTrigger("attack");
+        animator.ResetTrigger("chargedAttack");
+        animator.ResetTrigger("chargedAttackHold");
     }
 }
