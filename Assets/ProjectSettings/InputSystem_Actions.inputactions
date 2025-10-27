@@ -61,15 +61,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "ChargedAttack",
-                    "type": "Button",
-                    "id": "f20e2022-e620-4425-b4c2-feea3a52d77c",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "Hold",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Attack",
                     "type": "Button",
                     "id": "4a545893-c4a3-4121-9879-74093e7b2cd0",
@@ -272,9 +263,20 @@
                 },
                 {
                     "name": "",
+                    "id": "572afd95-3845-4e0f-9d76-7faa06faa236",
+                    "path": "<Keyboard>/j",
+                    "interactions": "Tap(duration=0.2)",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Attack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "0d0d14a0-97f7-47f6-b5bc-d2f813d60421",
                     "path": "<Keyboard>/j",
-                    "interactions": "",
+                    "interactions": "Hold(duration=0.5,pressPoint=0.5)",
                     "processors": "",
                     "groups": "",
                     "action": "Attack",
@@ -333,17 +335,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "Dash",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "ad9b33a0-38d9-4467-bf37-4cbdaa11d146",
-                    "path": "",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "ChargedAttack",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

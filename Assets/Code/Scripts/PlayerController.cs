@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Interactions;
 using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
@@ -90,6 +91,11 @@ public class PlayerController : MonoBehaviour
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
 
+    private bool isPressing = false;
+    private bool reachedHold;       
+    private bool didAttackThisPress; 
+    private float pressTime;
+
     private void OnEnable()
     {
         inputActions.FindActionMap("Player").Enable();
@@ -122,16 +128,89 @@ public class PlayerController : MonoBehaviour
         healthValue = healthMaxValue;
         healthWidth = healthBarRectTransform.sizeDelta.x;
         UpdateHealthBar();
+
+        attackAction.started += ctx =>
+        {
+            isPressing = true;
+            reachedHold = false;
+            didAttackThisPress = false;
+            pressTime = Time.time;
+
+            animator.ResetTrigger("attack");
+            animator.ResetTrigger("chargedAttack");
+            animator.SetTrigger("chargedAttackHold");
+
+            if (ctx.interaction is HoldInteraction)
+            {
+                ChargeAttack();
+            }
+            else if (ctx.interaction is TapInteraction)
+            {
+                Attack();
+            }
+        };
+        attackAction.performed += ctx =>
+        {
+            if (ctx.interaction is TapInteraction)
+            {
+                if (!didAttackThisPress)
+                {
+                    Attack();
+                    didAttackThisPress = true;
+                }
+            }
+            else if (ctx.interaction is HoldInteraction)
+            {
+                reachedHold = true;
+                animator.SetTrigger("chargedAttackHold");
+            }
+        };
+        attackAction.canceled += ctx =>
+        {
+            // Кнопку отпустили.
+            // Если это был "hold", бьем тяжелой АБСОЛЮТНО ТУТ.
+            animator.ResetTrigger("chargedAttackHold");
+
+            if (reachedHold && !didAttackThisPress)
+            {
+                animator.SetTrigger("chargedAttack");
+                Debug.Log("charged attack");
+                didAttackThisPress = true;
+            }
+
+            // Иначе — если это был чистый тап, мы уже ударили в performed Tap.
+            // Ничего не делаем, чтобы не задублировать.
+
+            // Сброс
+            isPressing = false;
+            reachedHold = false;
+        };
+    }
+
+    void ChargeAttack(bool performed = false)
+    {
+        if (!performed)
+        {
+            animator.SetTrigger("chargedAttackHold");
+            Debug.Log("charged attack");
+        }
+        else
+        {
+            animator.SetTrigger("chargedAttack");
+        }
+    }
+    
+    void Attack(bool performed = false)
+    {
+        if (!performed)
+        {
+            animator.SetTrigger("attack");
+        }
     }
 
     private void Update()
     {
         moveValue = moveAction.ReadValue<Vector2>();
-
-        if (attackAction.WasPressedThisFrame())
-        {
-            animator.SetTrigger("attack");
-        }
 
         if (dashAction.WasPressedThisFrame())
         {
