@@ -7,11 +7,11 @@ public class SwordScript : MonoBehaviour
 
     void Start()
     {
-        
+
     }
 
     void Update()
     {
-        
+
     }
 }
