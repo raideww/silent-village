@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Interactions;
 using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
@@ -111,7 +112,6 @@ public class PlayerController : MonoBehaviour
         healAction = InputSystem.actions.FindAction("heal");
         goDownAction = InputSystem.actions.FindAction("go down");
         dashAction = InputSystem.actions.FindAction("dash");
-        attackAction = InputSystem.actions.FindAction("attack");
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         rend = GetComponent<Renderer>();
@@ -127,11 +127,6 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         moveValue = moveAction.ReadValue<Vector2>();
-
-        if (attackAction.WasPressedThisFrame())
-        {
-            animator.SetTrigger("attack");
-        }
 
         if (dashAction.WasPressedThisFrame())
         {

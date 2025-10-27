@@ -61,15 +61,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "ChargedAttack",
-                    "type": "Button",
-                    "id": "f20e2022-e620-4425-b4c2-feea3a52d77c",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "Hold",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Attack",
                     "type": "Button",
                     "id": "4a545893-c4a3-4121-9879-74093e7b2cd0",
@@ -272,17 +263,6 @@
                 },
                 {
                     "name": "",
-                    "id": "0d0d14a0-97f7-47f6-b5bc-d2f813d60421",
-                    "path": "<Keyboard>/j",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Attack",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "9e47e53a-a80b-4ff8-9ab7-657b3fd2c3cc",
                     "path": "<Keyboard>/e",
                     "interactions": "",
@@ -338,12 +318,12 @@
                 },
                 {
                     "name": "",
-                    "id": "ad9b33a0-38d9-4467-bf37-4cbdaa11d146",
-                    "path": "",
+                    "id": "40aa2f95-25d7-42dc-a35b-30ff3d08d5d6",
+                    "path": "<Keyboard>/j",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "ChargedAttack",
+                    "action": "Attack",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
