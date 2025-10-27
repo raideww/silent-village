@@ -31,7 +31,7 @@ public class PlayerController : MonoBehaviour
     private BoxCollider2D boxCollider;
     private Renderer rend;
     private bool isFacingRight;
-    
+
 
     public float moveSpeed = 5.0f;
     public float crouchSpeed = 2.5f;
@@ -235,7 +235,7 @@ public class PlayerController : MonoBehaviour
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
         if (isGrounded)
         {
-            rb.linearVelocityY +=jumpSpeed;
+            rb.linearVelocityY += jumpSpeed;
         }
     }
 
@@ -280,7 +280,7 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocityX = moveValue.x * moveSpeed;
         }
-        
+
         if (!isSprinting && staminaValue < staminaMaxValue)
         {
             staminaValue += staminaRegenPerSecond * Time.deltaTime;
@@ -355,7 +355,7 @@ public class PlayerController : MonoBehaviour
         }
 
     }
-    
+
     bool GroundAbove()
     {
         return Physics2D.OverlapBox(ceilingCheck.position, ceilingCheckSize, 0f, groundLayer);
@@ -462,7 +462,7 @@ public class PlayerController : MonoBehaviour
             Dash();
         }
     }
-    
+
     void Dash()
     {
         float multitplier;
