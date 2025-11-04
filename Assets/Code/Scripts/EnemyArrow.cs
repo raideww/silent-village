@@ -2,32 +2,44 @@ using UnityEngine;
 
 public class Arrow : MonoBehaviour
 {
-    public float damage = 10f;           // damage dealt to player
-    public float lifetime = 5f;          // destroy arrow after this time
+    private Rigidbody2D rb;
+    public float lifetime = 5f;
 
-    private void Start()
+    void Start()
     {
-        // Destroy the arrow automatically after lifetime seconds
+        rb = GetComponent<Rigidbody2D>();
         Destroy(gameObject, lifetime);
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    void Update()
     {
-        // Check if arrow hits player
-        if (other.CompareTag("Player"))
+        // Only rotate if moving (so it doesn't spin when stuck)
+        if (rb != null && rb.linearVelocity.sqrMagnitude > 0.1f)
         {
-            PlayerController player = other.GetComponent<PlayerController>();
+            float angle = Mathf.Atan2(rb.linearVelocity.y, rb.linearVelocity.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+        }
+    }
+
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Player"))
+        {
+            PlayerController player = collision.GetComponent<PlayerController>();
             if (player != null)
             {
-                player.TakeDamage(damage);
+                player.TakeDamage(10f); // damage value adjustable
             }
 
-            Destroy(gameObject); // Destroy arrow on hit
-        }
-        // Optional: destroy arrow if it hits walls or ground
-        else if (other.CompareTag("Ground") || other.CompareTag("Wall"))
-        {
+            // Optional: destroy or "stick" arrow
             Destroy(gameObject);
+        }
+        else if (collision.CompareTag("Ground"))
+        {
+            // Stick into ground (optional)
+            rb.linearVelocity = Vector2.zero;
+            rb.bodyType = RigidbodyType2D.Kinematic; // ✅ modern replacement for isKinematic = true
+            Destroy(gameObject, 2f);
         }
     }
 }
