@@ -5,7 +5,7 @@ public class EnemyWolf : MonoBehaviour
 
     public float speed = 1.0f;
     public float chaseSpeed = 3.0f;
-    public float detectionRange = 10.0f;
+    public float detectionRange = 7.0f;
     public float range = 2.0f;
     public int damage = 10;
     public Transform player;
