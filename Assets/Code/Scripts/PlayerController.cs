@@ -16,7 +16,6 @@ public class PlayerController : MonoBehaviour
     private InputAction sprintAction;
     private InputAction crouchAction;
     private InputAction climbAction;
-    private InputAction healAction;
     private InputAction goDownAction;
     private InputAction dashAction;
     private InputAction attackAction;
@@ -56,26 +55,7 @@ public class PlayerController : MonoBehaviour
     // Sprint
     public float sprintSpeed = 10.0f;
 
-    // Stamina
-    public RectTransform staminaBarRectTransform;
-    public RectTransform staminaRectTransform;
-    public float staminaMaxValue = 5.0f;
-    public float staminaRegenPerSecond = 1.0f;
-    public float staminaDrainPerSecond = 1.0f;
 
-    private float staminaValue;
-    private float staminaWidth;
-
-    // Health
-    public RectTransform healthBarRectTransform;
-    public RectTransform healthRectTransform;
-    public float healthMaxValue = 100.0f;
-    private float healthValue;
-    private float healthWidth;
-
-    // Heal Potion
-    public int healPotionAmount = 1;
-    public float healPotionValue = 50.0f;
 
     // Dash
     public float dashSpeed = 4.0f;
@@ -91,6 +71,10 @@ public class PlayerController : MonoBehaviour
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
 
+
+    PlayerHealth playerHealth;
+    PlayerStamina playerStamina;
+
     private void OnEnable()
     {
         inputActions.FindActionMap("Player").Enable();
@@ -103,25 +87,22 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
+        playerHealth = GetComponent<PlayerHealth>();
+        playerStamina = GetComponent<PlayerStamina>();
+
         animator = GetComponent<Animator>();
         moveAction = InputSystem.actions.FindAction("move");
         jumpAction = InputSystem.actions.FindAction("jump");
         sprintAction = InputSystem.actions.FindAction("sprint");
         crouchAction = InputSystem.actions.FindAction("crouch");
         climbAction = InputSystem.actions.FindAction("climb");
-        healAction = InputSystem.actions.FindAction("heal");
         goDownAction = InputSystem.actions.FindAction("go down");
         dashAction = InputSystem.actions.FindAction("dash");
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         rend = GetComponent<Renderer>();
         boxCollider = GetComponent<BoxCollider2D>();
-        staminaValue = staminaMaxValue;
-        staminaWidth = staminaBarRectTransform.sizeDelta.x;
-        UpdateStaminaBar();
-        healthValue = healthMaxValue;
-        healthWidth = healthBarRectTransform.sizeDelta.x;
-        UpdateHealthBar();
+        
     }
 
     private void Update()
@@ -136,15 +117,6 @@ public class PlayerController : MonoBehaviour
         if (jumpAction.WasPressedThisFrame())
         {
             Jump();
-        }
-
-        if (healAction.WasPressedThisFrame())
-        {
-            if (healPotionAmount > 0)
-            {
-                healPotionAmount -= 1;
-                Heal(healPotionValue);
-            }
         }
 
         if (onLadder && goDownAction.WasPerformedThisFrame())
@@ -260,30 +232,13 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocityX = moveValue.x * crouchSpeed;
         }
-        else if (isSprinting && staminaValue > 0)
+        else if (isSprinting && playerStamina.Stamina > 0)
         {
             rb.linearVelocityX = moveValue.x * sprintSpeed;
-            staminaValue -= staminaDrainPerSecond * Time.deltaTime;
-            if (staminaValue < 0)
-            {
-                staminaValue = 0;
-            }
-            UpdateStaminaBar();
-
         }
         else
         {
             rb.linearVelocityX = moveValue.x * moveSpeed;
-        }
-
-        if (!isSprinting && staminaValue < staminaMaxValue)
-        {
-            staminaValue += staminaRegenPerSecond * Time.deltaTime;
-            if (staminaValue > staminaMaxValue)
-            {
-                staminaValue = staminaMaxValue;
-            }
-            UpdateStaminaBar();
         }
     }
 
@@ -412,37 +367,14 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void UpdateStaminaBar()
-    {
-        float newWidth = (staminaValue / staminaMaxValue) * staminaWidth;
-        staminaRectTransform.sizeDelta = new Vector2(newWidth, staminaRectTransform.sizeDelta.y);
-    }
-
-    void UpdateHealthBar()
-    {
-        float newWidth = (healthValue / healthMaxValue) * healthWidth;
-        healthRectTransform.sizeDelta = new Vector2(newWidth, healthRectTransform.sizeDelta.y);
-    }
-
+    
     public void TakeDamage(float value)
     {
-        healthValue -= value;
-        if (healthValue <= 0)
+        playerHealth.TakeDamage(value);
+        if (playerHealth.Health == 0)
         {
-            healthValue = 0;
             Die();
         }
-        UpdateHealthBar();
-    }
-
-    void Heal(float value)
-    {
-        healthValue += value;
-        if (healthValue > healthMaxValue)
-        {
-            healthValue = healthMaxValue;
-        }
-        UpdateHealthBar();
     }
 
     void Die()
