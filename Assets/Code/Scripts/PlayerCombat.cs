@@ -58,6 +58,10 @@ public class PlayerCombat : MonoBehaviour
         {
             if (attackAction.WasPressedThisFrame())
             {
+                
+            }
+            if (attackAction.WasReleasedThisFrame())
+            {
                 CannonScript cannon = weaponCannon.GetComponent<CannonScript>();
                 cannon.Attack();
             }

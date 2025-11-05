@@ -1,16 +1,12 @@
 using UnityEngine;
 
+
 public class SwordScript : MonoBehaviour
 {
-    public float damage = 5.0f;
-    public float cooldown = 0.5f;
+    public float damage = 100.0f;
+    public float damageCharged = 200.0f;
 
-    void Start()
-    {
-        
-    }
-
-    void Update()
+    void OnCollisionEnter2D(Collision2D collision)
     {
         
     }
