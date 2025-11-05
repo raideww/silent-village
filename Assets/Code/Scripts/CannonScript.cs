@@ -7,7 +7,7 @@ public class CannonScript : MonoBehaviour
     public GameObject cannonBallPrefab;
     public float ballSpeed = 10.0f;
 
-    void Attack()
+    public void Attack()
     {
         Vector3 spawnPoint = firePoint.transform.position + firePoint.rotation * Vector3.up;
         GameObject ball = Instantiate(cannonBallPrefab, spawnPoint, firePoint.rotation);

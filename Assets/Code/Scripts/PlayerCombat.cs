@@ -2,6 +2,12 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+enum Weapon
+{
+    Sword,
+    Cannon
+}
+
 public class PlayerCombat : MonoBehaviour
 {
     private InputAction attackAction;
@@ -12,7 +18,11 @@ public class PlayerCombat : MonoBehaviour
     private float chargedHoldingTime = .2f;
     private bool isHolding = false;
     private bool isCharged = false;
-    
+
+    // Cannon
+    private Weapon currentWeapon = Weapon.Cannon;
+    public GameObject weaponCannon;
+
 
     void Awake()
     {
@@ -22,25 +32,38 @@ public class PlayerCombat : MonoBehaviour
 
     void Update()
     {
-        if (isHolding)
-        {
-            HoldAttack();
-        }
-
-        if (attackAction.WasPressedThisFrame())
-        {
-            if (!isHolding)
-            {
-                StartAttack();
-            }
-        }
-        if (attackAction.WasReleasedThisFrame())
+        if (currentWeapon == Weapon.Sword)
         {
             if (isHolding)
             {
-                EndAttack();
+                HoldAttack();
+            }
+
+            if (attackAction.WasPressedThisFrame())
+            {
+                if (!isHolding)
+                {
+                    StartAttack();
+                }
+            }
+            if (attackAction.WasReleasedThisFrame())
+            {
+                if (isHolding)
+                {
+                    EndAttack();
+                }
             }
         }
+        else if (currentWeapon == Weapon.Cannon)
+        {
+            if (attackAction.WasPressedThisFrame())
+            {
+                CannonScript cannon = weaponCannon.GetComponent<CannonScript>();
+                cannon.Attack();
+            }
+        }
+
+        
     }
 
     void StartAttack()
@@ -73,7 +96,7 @@ public class PlayerCombat : MonoBehaviour
             animator.SetTrigger("chargedAttackHold");
         }
     }
-    
+
     void ResetAnimTriggers()
     {
         animator.ResetTrigger("attack");
