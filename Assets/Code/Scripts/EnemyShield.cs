@@ -2,29 +2,54 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class BossShieldController2D : MonoBehaviour
+public class NianBossShieldController : MonoBehaviour
 {
     [Header("Shield Settings")]
-    public GameObject shieldObject; // Your circle sprite
+    public GameObject shieldObject; // Your 2D sprite circle
     public float shieldDownTime = 10f;
 
-    [Header("Orb Settings")]
+    [Header("Orb Spawn Settings")]
     public GameObject orbPrefab;
     public float detectionRange = 30f;
     public int numberOfOrbs = 4;
 
-    [Header("Spawn Settings")]
-    public float spawnDistance = 8f;
+    [Header("Spawn Area Range")]
+    public float minXSpawn = -8f;
+    public float maxXSpawn = -2f;
+    public float ySpawnHeight = 2f;
+
+    [Header("Boss Physics")]
+    public bool usePhysicsMovement = false;
 
     private bool isShieldActive = true;
     private bool playerInRange = false;
     private List<GameObject> currentOrbs = new List<GameObject>();
     private int orbsDestroyed = 0;
     private Transform player;
+    private Rigidbody2D rb;
 
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
+        rb = GetComponent<Rigidbody2D>();
+
+        // Setup boss physics for future movement
+        if (rb != null)
+        {
+            if (usePhysicsMovement)
+            {
+                // For physics-based movement
+                rb.isKinematic = false;
+                rb.gravityScale = 0f; // No gravity for boss
+                rb.linearDamping = 3f; // Some drag to prevent sliding
+            }
+            else
+            {
+                // For transform-based movement (recommended for bosses)
+                rb.isKinematic = true;
+            }
+        }
+
         SetupShield();
         SetShield(true);
     }
@@ -35,14 +60,22 @@ public class BossShieldController2D : MonoBehaviour
         {
             // Reset shield position and scale
             shieldObject.transform.localPosition = Vector3.zero;
-            shieldObject.transform.localScale = Vector3.one; // Important for 2D!
+            shieldObject.transform.localScale = Vector3.one;
 
-            // Make sure the shield has proper 2D components
+            // Shield should only have a collider, NO Rigidbody2D
             CircleCollider2D shieldCollider = shieldObject.GetComponent<CircleCollider2D>();
             if (shieldCollider == null)
             {
                 shieldCollider = shieldObject.AddComponent<CircleCollider2D>();
-                shieldCollider.isTrigger = true; // So player can pass through
+                shieldCollider.isTrigger = true;
+            }
+
+            // Remove any Rigidbody2D that might be on the shield
+            Rigidbody2D shieldRb = shieldObject.GetComponent<Rigidbody2D>();
+            if (shieldRb != null)
+            {
+                Debug.LogWarning("Removing Rigidbody2D from shield - it should be on the boss parent!");
+                Destroy(shieldRb);
             }
         }
     }
@@ -50,6 +83,9 @@ public class BossShieldController2D : MonoBehaviour
     void Update()
     {
         CheckPlayerDistance();
+
+        // Future movement can be added here
+        // if (isShieldActive) MoveBoss();
     }
 
     void CheckPlayerDistance()
@@ -80,7 +116,7 @@ public class BossShieldController2D : MonoBehaviour
             Vector2 spawnPos = CalculateOrbSpawnPosition(i);
 
             GameObject orb = Instantiate(orbPrefab, spawnPos, Quaternion.identity);
-            ShieldOrb2D orbScript = orb.GetComponent<ShieldOrb2D>();
+            NianShieldOrb orbScript = orb.GetComponent<NianShieldOrb>();
 
             if (orbScript != null)
             {
@@ -90,19 +126,22 @@ public class BossShieldController2D : MonoBehaviour
             currentOrbs.Add(orb);
         }
 
-        Debug.Log($"{numberOfOrbs} shield orbs spawned! Destroy them!");
+        Debug.Log($"{numberOfOrbs} shield orbs spawned!");
     }
 
     Vector2 CalculateOrbSpawnPosition(int orbIndex)
     {
-        // Calculate positions in a semicircle on the LEFT side (2D)
-        float angle = (orbIndex * 90f) + 135f; // Left side angles
-        Vector2 spawnDir = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
+        float xSpawn = Mathf.Lerp(minXSpawn, maxXSpawn, (float)orbIndex / (numberOfOrbs - 1));
 
-        Vector2 spawnPos = (Vector2)transform.position + (spawnDir * spawnDistance);
+        float randomOffset = Random.Range(-0.5f, 0.5f);
+        xSpawn += randomOffset;
 
-        // Add some random variation
-        spawnPos += Random.insideUnitCircle * 2f;
+        xSpawn = Mathf.Clamp(xSpawn, minXSpawn, maxXSpawn);
+
+        Vector2 spawnPos = new Vector2(
+            transform.position.x + xSpawn,
+            transform.position.y + ySpawnHeight
+        );
 
         return spawnPos;
     }
@@ -124,7 +163,7 @@ public class BossShieldController2D : MonoBehaviour
         SetShield(false);
         CleanupOrbs();
 
-        Debug.Log("SHIELD BROKEN! Boss vulnerable for " + shieldDownTime + " seconds!");
+        Debug.Log("NIAN SHIELD BROKEN! Vulnerable for " + shieldDownTime + " seconds!");
         StartCoroutine(ReactivateShield());
     }
 
@@ -134,7 +173,7 @@ public class BossShieldController2D : MonoBehaviour
 
         isShieldActive = true;
         SetShield(true);
-        Debug.Log("Shield reactivated!");
+        Debug.Log("Nian shield reactivated!");
 
         if (playerInRange)
         {
@@ -165,19 +204,10 @@ public class BossShieldController2D : MonoBehaviour
         get { return isShieldActive; }
     }
 
-    // 2D Gizmos
-    void OnDrawGizmosSelected()
+    // Example method for future boss movement
+    void MoveBoss()
     {
-        // Detection range
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
-
-        // Orb spawn positions
-        Gizmos.color = Color.red;
-        for (int i = 0; i < numberOfOrbs; i++)
-        {
-            Vector2 spawnPos = CalculateOrbSpawnPosition(i);
-            Gizmos.DrawWireSphere(spawnPos, 0.5f);
-        }
+        // You can add your boss movement logic here later
+        // Example: transform.position += new Vector3(1, 0, 0) * Time.deltaTime;
     }
 }

@@ -12,7 +12,7 @@ public class PlayerCombat : MonoBehaviour
     private float chargedHoldingTime = .2f;
     private bool isHolding = false;
     private bool isCharged = false;
-    
+
 
     void Awake()
     {
@@ -73,7 +73,7 @@ public class PlayerCombat : MonoBehaviour
             animator.SetTrigger("chargedAttackHold");
         }
     }
-    
+
     void ResetAnimTriggers()
     {
         animator.ResetTrigger("attack");
