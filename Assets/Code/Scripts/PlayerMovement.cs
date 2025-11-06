@@ -43,6 +43,7 @@ public class PlayerMovement : MonoBehaviour
 
     private MovementType currentMovementType = MovementType.Walking;
     private float moveValue;
+    private bool tryingToUncrouch = false;
 
     private InputAction moveAction;
     private InputAction sprintAction;
@@ -78,11 +79,12 @@ public class PlayerMovement : MonoBehaviour
         {
             ChangeMovementType(MovementType.Walking);
         }
-        Debug.Log(rb.linearVelocityX);
     }
 
     void FixedUpdate()
     {
+        if (tryingToUncrouch && currentMovementType == MovementType.Crouching) TryToUncrouch();
+
         moveValue = moveAction.ReadValue<float>();
         bool grounded = GroundBelow();
 
@@ -134,17 +136,22 @@ public class PlayerMovement : MonoBehaviour
 
     void StartCrouching()
     {
+        tryingToUncrouch = false;
         animator.SetBool("isCrouching", true);
         Vector3 newPosition = transform.position;
         newPosition.y -= 0.3f;
         transform.position = newPosition;
     }
     void EndCrouching()
-    {
+    {   
         animator.SetBool("isCrouching", false);
         Vector3 newPosition = transform.position;
         newPosition.y += 0.3f;
         transform.position = newPosition;
+    }
+    void TryToUncrouch()
+    {
+        ChangeMovementType(MovementType.Walking);
     }
 
     void ChangeMovementType(MovementType newMovementType)
@@ -158,6 +165,12 @@ public class PlayerMovement : MonoBehaviour
                     EndSprinting();
                     break;
                 case MovementType.Crouching:
+                    Debug.Log(GroundAbove());
+                    if (GroundAbove())
+                    {
+                        tryingToUncrouch = true;
+                        return;
+                    }
                     EndCrouching();
                     break;
             }
