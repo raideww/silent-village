@@ -1,6 +1,4 @@
 using System;
-using NUnit.Framework;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -26,6 +24,10 @@ public class PlayerMovement : MonoBehaviour
     public float crouchingForce = 2.0f;
     public float jumpForce = 500.0f;
     public float climbingForce = 5.0f;
+    public float dashForce = 500.0f;
+
+    [Header("Cooldown")]
+    public float dashCooldown = 3.0f;
 
     [Header("Timing")]
     public float accelTime = 0.12f;      
@@ -50,10 +52,13 @@ public class PlayerMovement : MonoBehaviour
 
     private MovementType currentMovementType = MovementType.Walking;
     private float moveValue;
+    private float verticalValue;
     private bool tryingToUncrouch = false;
     private bool onLadder = false;
     private float gravityScaleInitial;
     private bool tryingToClimb = false;
+    private bool isFacingRight = false;
+    private float dashCooldownRemained = 0;
 
     private InputAction moveAction;
     private InputAction sprintAction;
@@ -61,6 +66,7 @@ public class PlayerMovement : MonoBehaviour
     private InputAction jumpAction;
     private InputAction climbAction;
     private InputAction verticalAction;
+    private InputAction dashAction;
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -79,6 +85,7 @@ public class PlayerMovement : MonoBehaviour
         jumpAction = InputSystem.actions.FindAction("jump");
         climbAction = InputSystem.actions.FindAction("climb");
         verticalAction = InputSystem.actions.FindAction("vertical");
+        dashAction = InputSystem.actions.FindAction("dash");
         
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
@@ -88,7 +95,11 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        dashCooldownRemained = Mathf.Max(0, dashCooldownRemained - Time.deltaTime);
         moveValue = moveAction.ReadValue<float>();
+
+        if (Math.Sign(moveValue) == 1 && !isFacingRight) isFacingRight = true;
+        else if (Math.Sign(moveValue) == -1 && isFacingRight) isFacingRight = false;
 
         // Climbing
         if (climbAction.WasPressedThisFrame())
@@ -127,18 +138,22 @@ public class PlayerMovement : MonoBehaviour
         {
             ChangeMovementType(MovementType.Walking);
         }
-        
+
         // Jump
         if (jumpAction.WasPressedThisFrame())
         {
             Jump();
         }
+
+        // Dash
+        if (dashAction.WasPressedThisFrame())
+        {
+            if (dashCooldownRemained == 0) Dash();
+        }        
     }
 
     void FixedUpdate()
     {
-        
-
         if (tryingToUncrouch && currentMovementType == MovementType.Crouching) TryToUncrouch();
         if (currentMovementType == MovementType.Sprinting && playerStamina.Stamina == 0)
         {
@@ -168,7 +183,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (currentMovementType == MovementType.Climbing)
         {
-            float verticalValue = verticalAction.ReadValue<float>();
+            verticalValue = verticalAction.ReadValue<float>();
 
             rb.AddForceY(ForceNeeded(climbingSpeedMax, climbingForce, verticalValue));
             rb.AddForceX(ForceNeeded(climbingSpeedMax, climbingForce, moveValue));
@@ -241,6 +256,13 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.AddForceY(jumpForce, ForceMode2D.Impulse);
         }
+    }
+
+    void Dash()
+    {
+        int dashDirection = isFacingRight ? 1 : -1;
+        rb.AddForceX(dashForce * dashDirection, ForceMode2D.Impulse);
+        dashCooldownRemained = dashCooldown;
     }
 
     void ChangeMovementType(MovementType newMovementType)

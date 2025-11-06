@@ -16,6 +16,15 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "Vertical",
+                    "type": "Value",
+                    "id": "07dfebfd-4451-4f3c-bf19-94226aedce44",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Sprint",
                     "type": "Button",
                     "id": "008b80ec-7f28-4d98-b770-c36c5509071e",
@@ -25,18 +34,18 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Jump",
+                    "name": "Crouch",
                     "type": "Button",
-                    "id": "f1ba0d36-48eb-4cd5-b651-1c94a6531f70",
+                    "id": "58ece253-6e4d-4a42-bc69-34c1d507c340",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Crouch",
+                    "name": "Jump",
                     "type": "Button",
-                    "id": "58ece253-6e4d-4a42-bc69-34c1d507c340",
+                    "id": "f1ba0d36-48eb-4cd5-b651-1c94a6531f70",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -88,15 +97,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Go down",
-                    "type": "Button",
-                    "id": "8515c700-9649-4f43-9486-2ce776ebd4cb",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Dash",
                     "type": "Button",
                     "id": "28f19e78-cb3e-40bc-9578-341b28f02ed1",
@@ -104,15 +104,6 @@
                     "processors": "",
                     "interactions": "Tap",
                     "initialStateCheck": false
-                },
-                {
-                    "name": "Vertical",
-                    "type": "Value",
-                    "id": "07dfebfd-4451-4f3c-bf19-94226aedce44",
-                    "expectedControlType": "Axis",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -217,19 +208,8 @@
                 },
                 {
                     "name": "",
-                    "id": "32153d74-aeae-4146-b88b-e21682a8bfc0",
-                    "path": "<Keyboard>/s",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Go down",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "8aae2d91-bd98-40be-b4c4-9abc6cc88022",
-                    "path": "<Keyboard>/shift",
+                    "path": "<Keyboard>/ctrl",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
