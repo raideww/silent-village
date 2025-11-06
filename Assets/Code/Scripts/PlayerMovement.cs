@@ -1,4 +1,5 @@
 using System;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -19,10 +20,14 @@ public class PlayerMovement : MonoBehaviour
     public float crouchingForce = 2.0f;
     public float crouchingSpeedMax = 5.0f;
 
+    [Header("Timing")]
+    public float accelTime = 0.12f;      
+    public float stopTime = 0.08f;
+
     [Header("Drag")]
     public float dragAir = 0.05f;
-    public float dragMoving = 0.2f;
-    public float dragIdle = 8f;
+    public float dragMoving = 6f;
+    public float dragIdle = 16f;
 
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -37,13 +42,14 @@ public class PlayerMovement : MonoBehaviour
 
 
     private MovementType currentMovementType = MovementType.Walking;
-    private Vector2 moveValue;
+    private float moveValue;
 
     private InputAction moveAction;
     private InputAction sprintAction;
     private InputAction crouchAction;
 
     private Rigidbody2D rb;
+    private Animator animator;
 
     void Awake()
     {
@@ -51,6 +57,7 @@ public class PlayerMovement : MonoBehaviour
         sprintAction = InputSystem.actions.FindAction("sprint");
         crouchAction = InputSystem.actions.FindAction("crouch");
         rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
     }
 
     void Update()
@@ -71,18 +78,21 @@ public class PlayerMovement : MonoBehaviour
         {
             ChangeMovementType(MovementType.Walking);
         }
+        Debug.Log(rb.linearVelocityX);
     }
 
     void FixedUpdate()
     {
-        moveValue = moveAction.ReadValue<Vector2>();
-        if (!GroundBelow())
+        moveValue = moveAction.ReadValue<float>();
+        bool grounded = GroundBelow();
+
+        if (!grounded)
         {
             rb.linearDamping = dragAir;
         }
         else
         {
-            if (moveValue == Vector2.zero || Math.Sign(moveValue.x) != Math.Sign(rb.linearVelocityX))
+            if (moveValue == 0 || Math.Sign(moveValue) != Math.Sign(rb.linearVelocityX))
             {
                 rb.linearDamping = dragIdle;
             }
@@ -92,44 +102,77 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-
-        if (currentMovementType == MovementType.Walking)
+        float maxSpeed, maxForce;
+        switch (currentMovementType)
         {
-            if (Math.Abs(rb.linearVelocityX) < walkingSpeedMax)
-            {
-                rb.AddForce(walkingForce * moveValue);
-            }
-            else
-            {
-                rb.AddForce(walkingForce * moveValue * -1);
-            }
-        }
-        else if (currentMovementType == MovementType.Sprinting)
-        {
-            if (Math.Abs(rb.linearVelocityX) < sprintingSpeedMax)
-            {
-                rb.AddForce(sprintingForce * moveValue);
-            }
-        }
-        else if (currentMovementType == MovementType.Crouching)
-        {
-            if (Math.Abs(rb.linearVelocityX) < crouchingSpeedMax)
-            {
-                rb.AddForce(crouchingForce * moveValue);
-            }
-            else
-            {
-                rb.AddForce(crouchingForce * moveValue * -1);
-            }
+            case MovementType.Sprinting: maxSpeed = sprintingSpeedMax; maxForce = sprintingForce; break;
+            case MovementType.Crouching: maxSpeed = crouchingSpeedMax; maxForce = crouchingForce; break;
+            default:                     maxSpeed = walkingSpeedMax;   maxForce = walkingForce;   break;
         }
 
-        Debug.Log(rb.linearVelocity);
+        float target = moveValue * maxSpeed;
+
+        // Быстрее выходим на target при нажатии, быстрее останавливаемся при отпускании
+        float tau = (Mathf.Abs(moveValue) > 0) ? Mathf.Max(0.01f, accelTime)
+                                               : Mathf.Max(0.01f, stopTime);
+
+        // Ускорение к цели
+        float a = (target - rb.linearVelocityX) / tau;
+        float forceNeeded = Mathf.Clamp(a * rb.mass, -maxForce, maxForce);
+
+        rb.AddForceX(forceNeeded);
+    }
+
+    void StartSprinting()
+    {
+
+    }
+    void EndSprinting()
+    {
+        
+    }
+
+    void StartCrouching()
+    {
+        animator.SetBool("isCrouching", true);
+        Vector3 newPosition = transform.position;
+        newPosition.y -= 0.3f;
+        transform.position = newPosition;
+    }
+    void EndCrouching()
+    {
+        animator.SetBool("isCrouching", false);
+        Vector3 newPosition = transform.position;
+        newPosition.y += 0.3f;
+        transform.position = newPosition;
     }
 
     void ChangeMovementType(MovementType newMovementType)
     {
         if (newMovementType != currentMovementType)
         {
+            // Ending Previous Movement
+            switch (currentMovementType)
+            {
+                case MovementType.Sprinting:
+                    EndSprinting();
+                    break;
+                case MovementType.Crouching:
+                    EndCrouching();
+                    break;
+            }
+            
+            // Starting New Movement
+            switch (newMovementType)
+            {
+                case MovementType.Sprinting:
+                    StartSprinting();
+                    break;
+                case MovementType.Crouching:
+                    StartCrouching();
+                    break;
+            }
+
             currentMovementType = newMovementType;
         }
     }
