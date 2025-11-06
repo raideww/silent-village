@@ -3,9 +3,10 @@ using UnityEngine;
 public class CannonBallScript : MonoBehaviour
 {
     public float damage = 100.0f;
-    
-    void OnCollisionEnter2D(Collision2D collision)
+
+    void OnTriggerEnter2D(Collider2D collision)
     {
-        Destroy(gameObject);
+        if (!collision.CompareTag("Projectile")) Destroy(gameObject);
+        
     }
 }
