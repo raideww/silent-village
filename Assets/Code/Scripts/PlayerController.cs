@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    private PlayerHealth playerHealth;
     private PlayerMovement playerMovement;
     private SpriteRenderer spriteRenderer;
     private bool isFacingRight = false;
@@ -12,7 +11,6 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
-        playerHealth = GetComponent<PlayerHealth>();
         playerMovement = GetComponent<PlayerMovement>();
         spriteRenderer = GetComponent<SpriteRenderer>();
     }
@@ -27,19 +25,5 @@ public class PlayerController : MonoBehaviour
         {
             spriteRenderer.flipX = isFacingRight = false;
         }
-    }
-
-    public void TakeDamage(float value)
-    {
-        playerHealth.TakeDamage(value);
-        if (playerHealth.Health == 0)
-        {
-            Die();
-        }
-    }
-
-    void Die()
-    {
-        Debug.Log("Player died!");
     }
 }

@@ -63,6 +63,12 @@ public class PlayerHealth : MonoBehaviour
         UpdateHealthBar();
     }
 
+    public void ResetHealth()
+    {
+        healthValue = healthMaxValue;
+        UpdateHealthBar();
+    }
+
     // Health Bar
     void UpdateHealthBar()
     {
