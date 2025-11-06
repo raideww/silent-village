@@ -1,6 +1,4 @@
 using System;
-using NUnit.Framework;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,7 +6,8 @@ enum MovementType
 {
     Walking,
     Sprinting,
-    Crouching
+    Crouching,
+    Climbing
 }
 
 public class PlayerMovement : MonoBehaviour
@@ -17,12 +16,18 @@ public class PlayerMovement : MonoBehaviour
     public float walkingSpeedMax = 10.0f;
     public float sprintingSpeedMax = 20.0f;
     public float crouchingSpeedMax = 5.0f;
+    public float climbingSpeedMax = 10.0f;
 
     [Header("Forces")]
     public float walkingForce = 5.0f;
     public float sprintingForce = 20.0f;
     public float crouchingForce = 2.0f;
     public float jumpForce = 500.0f;
+    public float climbingForce = 5.0f;
+    public float dashForce = 500.0f;
+
+    [Header("Cooldown")]
+    public float dashCooldown = 3.0f;
 
     [Header("Timing")]
     public float accelTime = 0.12f;      
@@ -32,6 +37,7 @@ public class PlayerMovement : MonoBehaviour
     public float dragAir = 0.05f;
     public float dragMoving = 6f;
     public float dragIdle = 16f;
+    public float dragClimbing = 6f;
 
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -46,12 +52,21 @@ public class PlayerMovement : MonoBehaviour
 
     private MovementType currentMovementType = MovementType.Walking;
     private float moveValue;
+    private float verticalValue;
     private bool tryingToUncrouch = false;
+    private bool onLadder = false;
+    private float gravityScaleInitial;
+    private bool tryingToClimb = false;
+    private bool isFacingRight = false;
+    private float dashCooldownRemained = 0;
 
     private InputAction moveAction;
     private InputAction sprintAction;
     private InputAction crouchAction;
     private InputAction jumpAction;
+    private InputAction climbAction;
+    private InputAction verticalAction;
+    private InputAction dashAction;
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -68,14 +83,43 @@ public class PlayerMovement : MonoBehaviour
         sprintAction = InputSystem.actions.FindAction("sprint");
         crouchAction = InputSystem.actions.FindAction("crouch");
         jumpAction = InputSystem.actions.FindAction("jump");
+        climbAction = InputSystem.actions.FindAction("climb");
+        verticalAction = InputSystem.actions.FindAction("vertical");
+        dashAction = InputSystem.actions.FindAction("dash");
         
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         playerStamina = GetComponent<PlayerStamina>();
+        gravityScaleInitial = rb.gravityScale;
     }
 
     void Update()
-    {   
+    {
+        dashCooldownRemained = Mathf.Max(0, dashCooldownRemained - Time.deltaTime);
+        moveValue = moveAction.ReadValue<float>();
+
+        if (Math.Sign(moveValue) == 1 && !isFacingRight) isFacingRight = true;
+        else if (Math.Sign(moveValue) == -1 && isFacingRight) isFacingRight = false;
+
+        // Climbing
+        if (climbAction.WasPressedThisFrame())
+        {
+            tryingToClimb = true;
+        }
+        else if (climbAction.WasReleasedThisFrame())
+        {
+            tryingToClimb = false;
+        }
+        if (tryingToClimb && currentMovementType != MovementType.Climbing && onLadder)
+        {
+            ChangeMovementType(MovementType.Climbing);
+        }
+        if (currentMovementType == MovementType.Climbing && !onLadder)
+        {
+            ChangeMovementType(MovementType.Walking);
+        }
+
+        // Sprinting
         if (sprintAction.WasPressedThisFrame())
         {
             ChangeMovementType(MovementType.Sprinting);
@@ -84,7 +128,9 @@ public class PlayerMovement : MonoBehaviour
         {
             ChangeMovementType(MovementType.Walking);
         }
-        if (crouchAction.WasPressedThisFrame())
+
+        // Crouching
+        if (currentMovementType != MovementType.Climbing && crouchAction.WasPressedThisFrame())
         {
             ChangeMovementType(MovementType.Crouching);
         }
@@ -92,10 +138,18 @@ public class PlayerMovement : MonoBehaviour
         {
             ChangeMovementType(MovementType.Walking);
         }
+
+        // Jump
         if (jumpAction.WasPressedThisFrame())
         {
             Jump();
         }
+
+        // Dash
+        if (dashAction.WasPressedThisFrame())
+        {
+            if (dashCooldownRemained == 0) Dash();
+        }        
     }
 
     void FixedUpdate()
@@ -106,11 +160,14 @@ public class PlayerMovement : MonoBehaviour
             ChangeMovementType(MovementType.Walking);
         }
 
-        moveValue = moveAction.ReadValue<float>();
 
-        if (!GroundBelow())
+        if (!GroundBelow() && currentMovementType != MovementType.Climbing)
         {
             rb.linearDamping = dragAir;
+        }
+        else if (currentMovementType == MovementType.Climbing)
+        {
+            rb.linearDamping = dragClimbing;    
         }
         else
         {
@@ -124,25 +181,35 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-        float maxSpeed, maxForce;
-        switch (currentMovementType)
+        if (currentMovementType == MovementType.Climbing)
         {
-            case MovementType.Sprinting: maxSpeed = sprintingSpeedMax; maxForce = sprintingForce; break;
-            case MovementType.Crouching: maxSpeed = crouchingSpeedMax; maxForce = crouchingForce; break;
-            default:                     maxSpeed = walkingSpeedMax;   maxForce = walkingForce;   break;
+            verticalValue = verticalAction.ReadValue<float>();
+
+            rb.AddForceY(ForceNeeded(climbingSpeedMax, climbingForce, verticalValue));
+            rb.AddForceX(ForceNeeded(climbingSpeedMax, climbingForce, moveValue));
         }
+        else
+        {
+            float maxSpeed, maxForce;
+            switch (currentMovementType)
+            {
+                case MovementType.Sprinting: maxSpeed = sprintingSpeedMax; maxForce = sprintingForce; break;
+                case MovementType.Crouching: maxSpeed = crouchingSpeedMax; maxForce = crouchingForce; break;
+                default: maxSpeed = walkingSpeedMax; maxForce = walkingForce; break;
+            }
 
-        float target = moveValue * maxSpeed;
-
-        // Быстрее выходим на target при нажатии, быстрее останавливаемся при отпускании
+            rb.AddForceX(ForceNeeded(maxSpeed, maxForce, moveValue));
+        }
+    }
+    
+    float ForceNeeded(float maxSpeed, float maxForce, float inputValue)
+    {
+        float target = inputValue * maxSpeed;
         float tau = (Mathf.Abs(moveValue) > 0) ? Mathf.Max(0.01f, accelTime)
                                                : Mathf.Max(0.01f, stopTime);
-
-        // Ускорение к цели
         float a = (target - rb.linearVelocityX) / tau;
         float forceNeeded = Mathf.Clamp(a * rb.mass, -maxForce, maxForce);
-
-        rb.AddForceX(forceNeeded);
+        return forceNeeded;
     }
 
     void StartSprinting()
@@ -174,12 +241,28 @@ public class PlayerMovement : MonoBehaviour
         ChangeMovementType(MovementType.Walking);
     }
 
+    void StartClimbing()
+    {
+        rb.gravityScale = 0;
+    }
+    void EndClimbing()
+    {
+        rb.gravityScale = gravityScaleInitial;
+    }
+
     void Jump()
     {
         if (GroundBelow())
         {
             rb.AddForceY(jumpForce, ForceMode2D.Impulse);
         }
+    }
+
+    void Dash()
+    {
+        int dashDirection = isFacingRight ? 1 : -1;
+        rb.AddForceX(dashForce * dashDirection, ForceMode2D.Impulse);
+        dashCooldownRemained = dashCooldown;
     }
 
     void ChangeMovementType(MovementType newMovementType)
@@ -200,6 +283,10 @@ public class PlayerMovement : MonoBehaviour
                     }
                     EndCrouching();
                     break;
+                case MovementType.Climbing:
+                    if (tryingToClimb && onLadder) return;
+                    EndClimbing();
+                    break;
             }
             
             // Starting New Movement
@@ -210,6 +297,9 @@ public class PlayerMovement : MonoBehaviour
                     break;
                 case MovementType.Crouching:
                     StartCrouching();
+                    break;
+                case MovementType.Climbing:
+                    StartClimbing();
                     break;
             }
 
@@ -225,6 +315,22 @@ public class PlayerMovement : MonoBehaviour
     bool GroundAbove()
     {
         return Physics2D.OverlapBox(ceilingCheck.position, ceilingCheckSize, 0f, groundLayer);
+    }
+
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Ladder"))
+        {
+            onLadder = true;
+        }
+    }
+
+    void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Ladder"))
+        {
+            onLadder = false;
+        }
     }
 
     void OnDrawGizmosSelected()
