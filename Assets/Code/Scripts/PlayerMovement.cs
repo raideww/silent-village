@@ -14,12 +14,15 @@ enum MovementType
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Speed")]
-    public float walkingForce = 5.0f;
     public float walkingSpeedMax = 10.0f;
-    public float sprintingForce = 20.0f;
     public float sprintingSpeedMax = 20.0f;
-    public float crouchingForce = 2.0f;
     public float crouchingSpeedMax = 5.0f;
+
+    [Header("Forces")]
+    public float walkingForce = 5.0f;
+    public float sprintingForce = 20.0f;
+    public float crouchingForce = 2.0f;
+    public float jumpForce = 500.0f;
 
     [Header("Timing")]
     public float accelTime = 0.12f;      
@@ -48,6 +51,7 @@ public class PlayerMovement : MonoBehaviour
     private InputAction moveAction;
     private InputAction sprintAction;
     private InputAction crouchAction;
+    private InputAction jumpAction;
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -63,6 +67,7 @@ public class PlayerMovement : MonoBehaviour
         moveAction = InputSystem.actions.FindAction("move");
         sprintAction = InputSystem.actions.FindAction("sprint");
         crouchAction = InputSystem.actions.FindAction("crouch");
+        jumpAction = InputSystem.actions.FindAction("jump");
         
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
@@ -70,7 +75,7 @@ public class PlayerMovement : MonoBehaviour
     }
 
     void Update()
-    {
+    {   
         if (sprintAction.WasPressedThisFrame())
         {
             ChangeMovementType(MovementType.Sprinting);
@@ -86,6 +91,10 @@ public class PlayerMovement : MonoBehaviour
         else if (crouchAction.WasReleasedThisFrame() && currentMovementType == MovementType.Crouching)
         {
             ChangeMovementType(MovementType.Walking);
+        }
+        if (jumpAction.WasPressedThisFrame())
+        {
+            Jump();
         }
     }
 
@@ -163,6 +172,14 @@ public class PlayerMovement : MonoBehaviour
     void TryToUncrouch()
     {
         ChangeMovementType(MovementType.Walking);
+    }
+
+    void Jump()
+    {
+        if (GroundBelow())
+        {
+            rb.AddForceY(jumpForce, ForceMode2D.Impulse);
+        }
     }
 
     void ChangeMovementType(MovementType newMovementType)
