@@ -1,10 +1,13 @@
 fileFormatVersion: 2
-guid: 0d018792c0de1ec4aabb33400e885b50
+guid: 6d6ff3dcc575f484aa76c683a05e1cee
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -394591486901757920
-    second: Boy_0
+      213: 7130627388057041330
+    second: House 2_0
+  - first:
+      213: -3151815634679905069
+    second: House 2_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -51,7 +54,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 1000
+  spritePixelsToUnits: 58
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -100,13 +103,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Boy_0
+      name: House 2_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1280
-        height: 1280
+        x: 54
+        y: 292
+        width: 6
+        height: 7
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +118,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 028d3df1221268af0800000000000000
-      internalID: -394591486901757920
+      spriteID: 2b9bfca64d315f260800000000000000
+      internalID: 7130627388057041330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: House 2_1
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 112
+        width: 820
+        height: 244
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d4c16911608244d0800000000000000
+      internalID: -3151815634679905069
       vertices: []
       indices: 
       edges: []
@@ -135,7 +160,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Boy_0: -394591486901757920
+      House 2_0: 7130627388057041330
+      House 2_1: -3151815634679905069
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
