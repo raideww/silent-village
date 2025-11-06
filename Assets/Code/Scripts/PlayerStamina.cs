@@ -19,6 +19,10 @@ public class PlayerStamina : MonoBehaviour
     {
         get { return staminaValue; }
     }
+    public bool IsDraining
+    {
+        get { return isDraining; }
+    }
 
     void Awake()
     {
@@ -54,7 +58,6 @@ public class PlayerStamina : MonoBehaviour
         if (staminaValue < 0)
         {
             staminaValue = 0;
-            EndDraining();
         }
         UpdateStaminaBar();
     }

@@ -51,6 +51,7 @@ public class PlayerMovement : MonoBehaviour
 
     private Rigidbody2D rb;
     private Animator animator;
+    private PlayerStamina playerStamina;
 
     public float MoveValue
     {
@@ -65,6 +66,7 @@ public class PlayerMovement : MonoBehaviour
         
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        playerStamina = GetComponent<PlayerStamina>();
     }
 
     void Update()
@@ -90,11 +92,14 @@ public class PlayerMovement : MonoBehaviour
     void FixedUpdate()
     {
         if (tryingToUncrouch && currentMovementType == MovementType.Crouching) TryToUncrouch();
+        if (currentMovementType == MovementType.Sprinting && playerStamina.Stamina == 0)
+        {
+            ChangeMovementType(MovementType.Walking);
+        }
 
         moveValue = moveAction.ReadValue<float>();
-        bool grounded = GroundBelow();
 
-        if (!grounded)
+        if (!GroundBelow())
         {
             rb.linearDamping = dragAir;
         }
@@ -133,11 +138,11 @@ public class PlayerMovement : MonoBehaviour
 
     void StartSprinting()
     {
-
+        playerStamina.StartDraining();
     }
     void EndSprinting()
     {
-        
+        playerStamina.EndDraining();
     }
 
     void StartCrouching()
@@ -171,7 +176,6 @@ public class PlayerMovement : MonoBehaviour
                     EndSprinting();
                     break;
                 case MovementType.Crouching:
-                    Debug.Log(GroundAbove());
                     if (GroundAbove())
                     {
                         tryingToUncrouch = true;
