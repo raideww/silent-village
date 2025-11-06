@@ -41,11 +41,9 @@ public class PlayerMovement : MonoBehaviour
     [Header("Ground Layer")]
     public LayerMask groundLayer;
 
-
     private MovementType currentMovementType = MovementType.Walking;
     private float moveValue;
     private bool tryingToUncrouch = false;
-    private bool isFacingRight = false;
 
     private InputAction moveAction;
     private InputAction sprintAction;
@@ -53,7 +51,11 @@ public class PlayerMovement : MonoBehaviour
 
     private Rigidbody2D rb;
     private Animator animator;
-    private SpriteRenderer spriteRenderer;
+
+    public float MoveValue
+    {
+        get { return moveValue; }
+    }
 
     void Awake()
     {
@@ -63,7 +65,6 @@ public class PlayerMovement : MonoBehaviour
         
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     void Update()
@@ -92,9 +93,6 @@ public class PlayerMovement : MonoBehaviour
 
         moveValue = moveAction.ReadValue<float>();
         bool grounded = GroundBelow();
-
-        if (Math.Sign(moveValue) == 1 && !isFacingRight) spriteRenderer.flipX = isFacingRight = true;
-        else if (Math.Sign(moveValue) == -1 && isFacingRight) spriteRenderer.flipX = isFacingRight = false;
 
         if (!grounded)
         {
@@ -206,5 +204,12 @@ public class PlayerMovement : MonoBehaviour
     bool GroundAbove()
     {
         return Physics2D.OverlapBox(ceilingCheck.position, ceilingCheckSize, 0f, groundLayer);
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        Gizmos.DrawWireCube(ceilingCheck.position, ceilingCheckSize);
     }
 }
