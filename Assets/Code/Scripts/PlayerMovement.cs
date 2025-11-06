@@ -1,4 +1,5 @@
 using System;
+using NUnit.Framework;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -44,6 +45,7 @@ public class PlayerMovement : MonoBehaviour
     private MovementType currentMovementType = MovementType.Walking;
     private float moveValue;
     private bool tryingToUncrouch = false;
+    private bool isFacingRight = false;
 
     private InputAction moveAction;
     private InputAction sprintAction;
@@ -51,14 +53,17 @@ public class PlayerMovement : MonoBehaviour
 
     private Rigidbody2D rb;
     private Animator animator;
+    private SpriteRenderer spriteRenderer;
 
     void Awake()
     {
         moveAction = InputSystem.actions.FindAction("move");
         sprintAction = InputSystem.actions.FindAction("sprint");
         crouchAction = InputSystem.actions.FindAction("crouch");
+        
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     void Update()
@@ -87,6 +92,9 @@ public class PlayerMovement : MonoBehaviour
 
         moveValue = moveAction.ReadValue<float>();
         bool grounded = GroundBelow();
+
+        if (Math.Sign(moveValue) == 1 && !isFacingRight) spriteRenderer.flipX = isFacingRight = true;
+        else if (Math.Sign(moveValue) == -1 && isFacingRight) spriteRenderer.flipX = isFacingRight = false;
 
         if (!grounded)
         {
