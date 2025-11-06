@@ -2,9 +2,11 @@ using UnityEngine;
 
 public class CannonScript : MonoBehaviour
 {
-    [Header("Ball")]
+    [Header("Ball Speed")]
     public float ballSpeed = 5.0f;
     public float ballSpeedCharged = 20.0f;
+
+    [Header("Ball Damage")]
     public float ballDamage = 100.0f;
     public float ballDamageCharged = 200.0f;
 
