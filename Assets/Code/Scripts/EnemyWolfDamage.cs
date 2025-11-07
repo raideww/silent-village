@@ -14,7 +14,7 @@ public class WolfDamage : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player") && Time.time >= nextAttackTime)
         {
-            PlayerController player = collision.gameObject.GetComponent<PlayerController>();
+            PlayerHealth player = collision.gameObject.GetComponent<PlayerHealth>();
             Rigidbody2D playerRb = collision.gameObject.GetComponent<Rigidbody2D>();
 
             if (player != null && playerRb != null)
@@ -40,7 +40,7 @@ public class WolfDamage : MonoBehaviour
     {
         if (other.CompareTag("Player") && Time.time >= nextAttackTime)
         {
-            PlayerController player = other.GetComponent<PlayerController>();
+            PlayerHealth player = other.GetComponent<PlayerHealth>();
             Rigidbody2D playerRb = other.GetComponent<Rigidbody2D>();
 
             if (player != null && playerRb != null)

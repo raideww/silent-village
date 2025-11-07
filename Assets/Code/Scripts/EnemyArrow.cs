@@ -36,7 +36,7 @@ public class Arrow : MonoBehaviour
 
         if (isPlayer)
         {
-            PlayerController player = collision.GetComponent<PlayerController>();
+            PlayerHealth player = collision.GetComponent<PlayerHealth>();
             if (player != null)
             {
                 player.TakeDamage(10f); // damage value adjustable
