@@ -20,14 +20,6 @@ public class PlayerCombat : MonoBehaviour
     private float chargedHoldingTime = .2f;
     private bool isHolding = false;
     private bool isCharged = false;
-    public float holdingTimeMax = 2.0f;
-
-    // Cannon
-    private Weapon currentWeapon = Weapon.Cannon;
-
-    public GameObject weaponSword;
-    public GameObject weaponCannon;
-    private CannonScript cannonScript;
 
 
     void Awake()

@@ -1,21 +1,22 @@
 using UnityEngine;
 
-public class ShieldOrb2D : MonoBehaviour
+public class NianShieldOrb : MonoBehaviour
 {
-    public BossShieldController2D shieldController;
+    public NianBossShieldController shieldController;
     public int orbID;
 
     void Start()
     {
-        // 2D Physics setup
+        // 2D RIGIDBODY - FIXED
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         if (rb != null)
         {
-            rb.isKinematic = true; // Important for 2D!
+            rb.isKinematic = true;
+            rb.gravityScale = 0f; // 2D version of useGravity = false
         }
     }
 
-    public void Initialize(BossShieldController2D controller, int id)
+    public void Initialize(NianBossShieldController controller, int id)
     {
         shieldController = controller;
         orbID = id;
@@ -30,7 +31,7 @@ public class ShieldOrb2D : MonoBehaviour
         Destroy(gameObject);
     }
 
-    // 2D Collision
+    // 2D COLLISION - FIXED
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("PlayerWeapon") || other.CompareTag("Player"))
