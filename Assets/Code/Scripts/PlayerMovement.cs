@@ -272,14 +272,14 @@ public class PlayerMovement : MonoBehaviour
         tryingToUncrouch = false;
         animator.SetBool("isCrouching", true);
         Vector3 newPosition = transform.position;
-        newPosition.y -= 0.3f;
+        newPosition.y -= 0.5f;
         transform.position = newPosition;
     }
     void EndCrouching()
     {   
         animator.SetBool("isCrouching", false);
         Vector3 newPosition = transform.position;
-        newPosition.y += 0.3f;
+        newPosition.y += 0.5f;
         transform.position = newPosition;
     }
     void TryToUncrouch()
