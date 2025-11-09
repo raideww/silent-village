@@ -184,7 +184,10 @@ public class PlayerMovement : MonoBehaviour
             isFallingDown = false;
             animator.SetBool("isGoingUp", false);
             animator.SetBool("isFallingDown", false);
-            ChangeMovementType(MovementType.Walking);
+            if (currentMovementType != MovementType.Climbing)
+            {
+                ChangeMovementType(MovementType.Walking);
+            }
         }
     }
 
@@ -290,10 +293,12 @@ public class PlayerMovement : MonoBehaviour
     void StartClimbing()
     {
         rb.gravityScale = 0;
+        animator.SetBool("isClimbing", true);
     }
     void EndClimbing()
     {
         rb.gravityScale = gravityScaleInitial;
+        animator.SetBool("isClimbing", false);
     }
     void StartJumping()
     {
