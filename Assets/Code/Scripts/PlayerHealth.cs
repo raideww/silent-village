@@ -1,43 +1,78 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 public class PlayerHealth : MonoBehaviour
 {
-    public int maxHP = 100;
-    public int currentHP;
-    public Image hpBar; // optional UI image assigned in inspector
+    [Header("Health")]
+    [SerializeField] private float healthMaxValue = 100.0f;
 
-    void Start()
+    [Header("Heal Potion")]
+    [SerializeField] private int healPotionAmount = 1;
+    [SerializeField] private float healPotionValue = 50.0f;
+
+    [Header("Health Bar Elements")]
+    [SerializeField] private RectTransform healthBarRectTransform;
+    [SerializeField] private RectTransform healthRectTransform;
+    
+    private float healthValue;
+    private float healthWidth;
+    private InputAction healAction;
+
+    public float Health
     {
-        currentHP = maxHP;
-        UpdateHPBar();
+        get { return healthValue; }
     }
 
-    // This method will be called by EnemyArcher via SendMessage or directly if you use GetComponent
-    public void TakeDamage(int damage)
+    void Awake()
     {
-        currentHP -= damage;
-        Debug.Log($"PlayerHealth: Took {damage} damage. Current HP = {currentHP}");
-        if (currentHP <= 0)
+        healAction = InputSystem.actions.FindAction("heal");
+        healthValue = healthMaxValue;
+        healthWidth = healthBarRectTransform.sizeDelta.x;
+        UpdateHealthBar();
+    }
+
+    void Update()
+    {
+        if (healAction.WasPressedThisFrame())
         {
-            Die();
+            if (healPotionAmount > 0)
+            {
+                healPotionAmount -= 1;
+                Heal(healPotionValue);
+            }
         }
-        UpdateHPBar();
     }
 
-    void Die()
+    public void TakeDamage(float value)
     {
-        Debug.Log("PlayerHealth: Player died.");
-        // TODO: add death handling (disable input, play animation, respawn, etc.)
-        // For now, just destroy the GameObject
-        // Destroy(gameObject);
-    }
-
-    void UpdateHPBar()
-    {
-        if (hpBar != null && maxHP > 0)
+        healthValue -= value;
+        if (healthValue <= 0)
         {
-            hpBar.fillAmount = (float)currentHP / maxHP;
+            healthValue = 0;
         }
+        UpdateHealthBar();
+    }
+
+    void Heal(float value)
+    {
+        healthValue += value;
+        if (healthValue > healthMaxValue)
+        {
+            healthValue = healthMaxValue;
+        }
+        UpdateHealthBar();
+    }
+
+    public void ResetHealth()
+    {
+        healthValue = healthMaxValue;
+        UpdateHealthBar();
+    }
+
+    // Health Bar
+    void UpdateHealthBar()
+    {
+        float newWidth = (healthValue / healthMaxValue) * healthWidth;
+        healthRectTransform.sizeDelta = new Vector2(newWidth, healthRectTransform.sizeDelta.y);
     }
 }
