@@ -1,4 +1,5 @@
 using System;
+using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,7 +8,9 @@ enum MovementType
     Walking,
     Sprinting,
     Crouching,
-    Climbing
+    Climbing,
+    Idle,
+    Jumping
 }
 
 public class PlayerMovement : MonoBehaviour
@@ -57,8 +60,10 @@ public class PlayerMovement : MonoBehaviour
     private bool onLadder = false;
     private float gravityScaleInitial;
     private bool tryingToClimb = false;
-    private bool isFacingRight = false;
+    private bool isFacingRight = true;
     private float dashCooldownRemained = 0;
+    private bool isGoingUp = false;
+    private bool isFallingDown = false;
 
     private InputAction moveAction;
     private InputAction sprintAction;
@@ -142,14 +147,48 @@ public class PlayerMovement : MonoBehaviour
         // Jump
         if (jumpAction.WasPressedThisFrame())
         {
-            Jump();
+            ChangeMovementType(MovementType.Jumping);
         }
 
         // Dash
         if (dashAction.WasPressedThisFrame())
         {
             if (dashCooldownRemained == 0) Dash();
-        }        
+        }
+
+        // Wallking & Idle
+        if (currentMovementType == MovementType.Walking && moveValue == 0)
+        {
+            ChangeMovementType(MovementType.Idle);
+        }
+        if (currentMovementType == MovementType.Idle && moveValue != 0)
+        {
+            ChangeMovementType(MovementType.Walking);
+        }
+
+        if (rb.linearVelocityY > 0 && !isGoingUp)
+        {
+            isGoingUp = true;
+            animator.SetBool("isGoingUp", true);
+        }
+        else if (rb.linearVelocityY < 0 && isGoingUp && !isFallingDown)
+        {
+            isGoingUp = false;
+            isFallingDown = true;
+            animator.SetBool("isGoingUp", false);
+            animator.SetBool("isFallingDown", true);
+        }
+        else if (rb.linearVelocityY == 0 && (isGoingUp || isFallingDown))
+        {
+            isGoingUp = false;
+            isFallingDown = false;
+            animator.SetBool("isGoingUp", false);
+            animator.SetBool("isFallingDown", false);
+            if (currentMovementType != MovementType.Climbing)
+            {
+                ChangeMovementType(MovementType.Walking);
+            }
+        }
     }
 
     void FixedUpdate()
@@ -201,7 +240,7 @@ public class PlayerMovement : MonoBehaviour
             rb.AddForceX(ForceNeeded(maxSpeed, maxForce, moveValue));
         }
     }
-    
+
     float ForceNeeded(float maxSpeed, float maxForce, float inputValue)
     {
         float target = inputValue * maxSpeed;
@@ -212,12 +251,22 @@ public class PlayerMovement : MonoBehaviour
         return forceNeeded;
     }
 
+    void StartWalking()
+    {
+        animator.SetBool("isWalking", true);
+    }
+    void EndWalking()
+    {
+        animator.SetBool("isWalking", false);
+    }
     void StartSprinting()
     {
+        animator.SetBool("isSprinting", true);
         playerStamina.StartDraining();
     }
     void EndSprinting()
     {
+        animator.SetBool("isSprinting", false);
         playerStamina.EndDraining();
     }
 
@@ -226,14 +275,14 @@ public class PlayerMovement : MonoBehaviour
         tryingToUncrouch = false;
         animator.SetBool("isCrouching", true);
         Vector3 newPosition = transform.position;
-        newPosition.y -= 0.3f;
+        newPosition.y -= 0.5f;
         transform.position = newPosition;
     }
     void EndCrouching()
     {   
         animator.SetBool("isCrouching", false);
         Vector3 newPosition = transform.position;
-        newPosition.y += 0.3f;
+        newPosition.y += 0.5f;
         transform.position = newPosition;
     }
     void TryToUncrouch()
@@ -244,18 +293,25 @@ public class PlayerMovement : MonoBehaviour
     void StartClimbing()
     {
         rb.gravityScale = 0;
+        animator.SetBool("isClimbing", true);
     }
     void EndClimbing()
     {
         rb.gravityScale = gravityScaleInitial;
+        animator.SetBool("isClimbing", false);
     }
-
+    void StartJumping()
+    {
+        animator.SetTrigger("jump");
+        Jump();
+    }
+    void EndJumping()
+    {
+        animator.SetTrigger("land");
+    }
     void Jump()
     {
-        if (GroundBelow())
-        {
-            rb.AddForceY(jumpForce, ForceMode2D.Impulse);
-        }
+        rb.AddForceY(jumpForce, ForceMode2D.Impulse);
     }
 
     void Dash()
@@ -269,9 +325,14 @@ public class PlayerMovement : MonoBehaviour
     {
         if (newMovementType != currentMovementType)
         {
+            if (newMovementType == MovementType.Jumping && !GroundBelow()) return;
+
             // Ending Previous Movement
             switch (currentMovementType)
             {
+                case MovementType.Walking:
+                    EndWalking();
+                    break;
                 case MovementType.Sprinting:
                     EndSprinting();
                     break;
@@ -287,11 +348,18 @@ public class PlayerMovement : MonoBehaviour
                     if (tryingToClimb && onLadder) return;
                     EndClimbing();
                     break;
+                case MovementType.Jumping:
+                    if (isFallingDown || isGoingUp) return;
+                    EndJumping();
+                    break;
             }
             
             // Starting New Movement
             switch (newMovementType)
             {
+                case MovementType.Walking:
+                    StartWalking();
+                    break;
                 case MovementType.Sprinting:
                     StartSprinting();
                     break;
@@ -300,6 +368,9 @@ public class PlayerMovement : MonoBehaviour
                     break;
                 case MovementType.Climbing:
                     StartClimbing();
+                    break;
+                case MovementType.Jumping:
+                    StartJumping();
                     break;
             }
 
