@@ -6,7 +6,7 @@ public class PlayerController : MonoBehaviour
 {
     private PlayerMovement playerMovement;
     private SpriteRenderer spriteRenderer;
-    private bool isFacingRight = true;
+    private bool isFacingRight = false;
 
 
     private void Awake()
@@ -19,13 +19,11 @@ public class PlayerController : MonoBehaviour
     {
         if (Math.Sign(playerMovement.MoveValue) == 1 && !isFacingRight)
         {
-            isFacingRight = true;
-            spriteRenderer.flipX = !isFacingRight;
+            spriteRenderer.flipX = isFacingRight = true;
         }
         else if (Math.Sign(playerMovement.MoveValue) == -1 && isFacingRight)
         {
-            isFacingRight = false;
-            spriteRenderer.flipX = !isFacingRight;
+            spriteRenderer.flipX = isFacingRight = false;
         }
     }
 }
