@@ -3,6 +3,7 @@ using UnityEngine;
 public class PlayerRespawn : MonoBehaviour
 {
     public Transform startPoint;
+    
     private Vector2 respawnPoint;
     private PlayerHealth playerHealth;
 
