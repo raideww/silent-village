@@ -149,7 +149,41 @@ public class PlayerMovement : MonoBehaviour
         if (dashAction.WasPressedThisFrame())
         {
             if (dashCooldownRemained == 0) Dash();
-        }        
+        }
+
+        // Wallking & Idle
+        if (currentMovementType == MovementType.Walking && moveValue == 0)
+        {
+            ChangeMovementType(MovementType.Idle);
+        }
+        if (currentMovementType == MovementType.Idle && moveValue != 0)
+        {
+            ChangeMovementType(MovementType.Walking);
+        }
+
+        if (rb.linearVelocityY > 0 && !isGoingUp)
+        {
+            isGoingUp = true;
+            animator.SetBool("isGoingUp", true);
+        }
+        else if (rb.linearVelocityY < 0 && isGoingUp && !isFallingDown)
+        {
+            isGoingUp = false;
+            isFallingDown = true;
+            animator.SetBool("isGoingUp", false);
+            animator.SetBool("isFallingDown", true);
+        }
+        else if (rb.linearVelocityY == 0 && (isGoingUp || isFallingDown))
+        {
+            isGoingUp = false;
+            isFallingDown = false;
+            animator.SetBool("isGoingUp", false);
+            animator.SetBool("isFallingDown", false);
+            if (currentMovementType != MovementType.Climbing)
+            {
+                ChangeMovementType(MovementType.Walking);
+            }
+        }
     }
 
     void FixedUpdate()
@@ -226,14 +260,14 @@ public class PlayerMovement : MonoBehaviour
         tryingToUncrouch = false;
         animator.SetBool("isCrouching", true);
         Vector3 newPosition = transform.position;
-        newPosition.y -= 0.3f;
+        newPosition.y -= 0.5f;
         transform.position = newPosition;
     }
     void EndCrouching()
     {   
         animator.SetBool("isCrouching", false);
         Vector3 newPosition = transform.position;
-        newPosition.y += 0.3f;
+        newPosition.y += 0.5f;
         transform.position = newPosition;
     }
     void TryToUncrouch()
@@ -244,10 +278,12 @@ public class PlayerMovement : MonoBehaviour
     void StartClimbing()
     {
         rb.gravityScale = 0;
+        animator.SetBool("isClimbing", true);
     }
     void EndClimbing()
     {
         rb.gravityScale = gravityScaleInitial;
+        animator.SetBool("isClimbing", false);
     }
 
     void Jump()
