@@ -28,4 +28,14 @@ public class PlayerController : MonoBehaviour
             spriteRenderer.flipX = !isFacingRight;
         }
     }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        // if(collision.gameObject.layer == LayerMask.NameToLayer("Ground"))
+        // {
+            // Debug.Log(collision.gameObject.name);
+            // Destroy(collision.gameObject);
+        // }
+
+    }
 }

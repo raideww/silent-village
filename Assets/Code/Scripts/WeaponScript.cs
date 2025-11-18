@@ -4,7 +4,7 @@ using UnityEngine;
 public class WeaponScript : MonoBehaviour
 {
     public PlayerMovement playerMovement;
-    private bool isFacingRight = false;
+    private bool isFacingRight = true;
 
     void FixedUpdate()
     {
