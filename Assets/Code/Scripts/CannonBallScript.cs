@@ -6,7 +6,7 @@ public class CannonBallScript : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Enemy") ||
-        collision.gameObject.layer == LayerMask.NameToLayer("Ground")) Destroy(gameObject);
+        if (!collision.CompareTag("Projectile")) Destroy(gameObject);
+        
     }
 }

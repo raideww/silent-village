@@ -139,13 +139,13 @@ public class PlayerCombat : MonoBehaviour
 
         if (currentWeapon == Weapon.Sword)
         {
-            // weaponSword.SetActive(false);
+            weaponSword.SetActive(false);
             weaponCannon.SetActive(true);
             currentWeapon = Weapon.Cannon;
         }
         else if (currentWeapon == Weapon.Cannon)
         {
-            // weaponSword.SetActive(true);
+            weaponSword.SetActive(true);
             weaponCannon.SetActive(false);
             currentWeapon = Weapon.Sword;
         }
